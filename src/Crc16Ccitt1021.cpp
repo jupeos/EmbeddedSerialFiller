@@ -1,5 +1,5 @@
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <string>
 
 #include "SerialFiller/Crc16Ccitt1021.hpp"

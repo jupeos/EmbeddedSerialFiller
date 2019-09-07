@@ -122,7 +122,7 @@ namespace mn {
             }
 
             // If we reach here, no subscriber was found!
-            throw SerialFillerException(std::string() + __PRETTY_FUNCTION__ + " called but subscriber ID of " + std::to_string(subscriberId) + " was not found.");
+            throw SerialFillerException(std::string() + __FUNCTION__ + " called but subscriber ID of " + std::to_string(subscriberId) + " was not found.");
         }
 
         void SerialFiller::UnsubscribeAll() noexcept {
@@ -265,7 +265,7 @@ namespace mn {
             if(txDataReady_) {
                 txDataReady_(txData);
             } else
-                throw std::runtime_error(std::string() + __PRETTY_FUNCTION__ + " was called but txDataReady_ function has no valid function object.");
+                throw std::runtime_error(std::string() + __FUNCTION__ + " was called but txDataReady_ function has no valid function object.");
 
 //            std::cout << "SendAck() finished." << std::endl;
         }
@@ -309,7 +309,7 @@ namespace mn {
             if(txDataReady_)
                 txDataReady_(txData);
             else
-                throw std::runtime_error(std::string() + __PRETTY_FUNCTION__ + " was called but txDataReady_ function has no valid function object.");
+                throw std::runtime_error(std::string() + __FUNCTION__ + " was called but txDataReady_ function has no valid function object.");
 
             // If everything was successful, increment packet ID
             nextPacketId_ += 1;
