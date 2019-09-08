@@ -14,8 +14,8 @@
 #include <etl/cstring.h>
 #include <etl/vector.h>
 
-#define MAX_PACKET_SIZE 64
-#define MAX_TOP_LENGTH 8
+#define MAX_PACKET_SIZE 270
+#define MAX_TOP_LENGTH 16
 #define MAX_SUBSCRIBERS 8
 #define MAX_PENDING_ACKS 8
 // Log related.
