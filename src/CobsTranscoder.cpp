@@ -10,106 +10,101 @@
 
 // User includes
 #include "SerialFiller/CobsTranscoder.hpp"
-#include "SerialFiller/Exceptions/CobsDecodingFailed.hpp"
+#include "SerialFiller/Logger.hpp"
+#include <iostream>
 
 namespace mn {
-    namespace SerialFiller {
+namespace SerialFiller {
 
+void CobsTranscoder::Encode(const ByteArray& rawData, ByteArray& encodedData)
+{
+    size_t  startOfCurrBlock       = 0;
+    uint8_t numElementsInCurrBlock = 0;
 
-        void CobsTranscoder::Encode(
-                const ByteArray &rawData,
-                ByteArray &encodedData) {
+    auto it = rawData.begin();
 
-            int startOfCurrBlock = 0;
-            uint8_t numElementsInCurrBlock = 0;
+    // Create space for first (this will be
+    // overwritten once count to next 0x00 is known)
+    encodedData.push_back(0x00);
 
-            auto it = rawData.begin();
+    while (it != rawData.end()) {
+        if (*it == 0x00) {
+            // Save the number of elements before the next 0x00 into
+            // the output
+            encodedData[startOfCurrBlock] = static_cast<uint8_t>(numElementsInCurrBlock + 1);
 
-            // Create space for first (this will be
-            // overwritten once count to next 0x00 is known)
+            // Add placeholder at start of next block
             encodedData.push_back(0x00);
 
-            while (it != rawData.end()) {
+            startOfCurrBlock = encodedData.size() - 1;
 
-                if (*it == 0x00) {
-                    // Save the number of elements before the next 0x00 into
-                    // the output
-                    encodedData[startOfCurrBlock] = (uint8_t) (numElementsInCurrBlock + 1);
-
-                    // Add placeholder at start of next block
-                    encodedData.push_back(0x00);
-
-                    startOfCurrBlock = encodedData.size() - 1;
-
-                    // Reset count of num. elements in current block
-                    numElementsInCurrBlock = 0;
-
-                } else {
-                    encodedData.push_back(*it);
-                    numElementsInCurrBlock++;
-
-                    if(numElementsInCurrBlock == 254) {
-
-                        encodedData[startOfCurrBlock] = (uint8_t) (numElementsInCurrBlock + 1);
-
-                        // Add placeholder at start of next block
-                        encodedData.push_back(0x00);
-
-                        startOfCurrBlock = encodedData.size() - 1;
-
-                        // Reset count of num. elements in current block
-                        numElementsInCurrBlock = 0;
-                    }
-
-                }
-                it++;
-            }
-
-            // Finish the last block
-            // Insert pointer to the terminating 0x00 character
-            encodedData[startOfCurrBlock] = numElementsInCurrBlock + 1;
-            encodedData.push_back(0x00);
+            // Reset count of num. elements in current block
+            numElementsInCurrBlock = 0;
         }
+        else {
+            encodedData.push_back(*((uint8_t*) it));
+            numElementsInCurrBlock++;
 
-        void CobsTranscoder::Decode(
-                const ByteArray &encodedData,
-                ByteArray &decodedData) {
+            if (numElementsInCurrBlock == 254) {
+                encodedData[startOfCurrBlock] = static_cast<uint8_t>(numElementsInCurrBlock + 1);
 
-            decodedData.clear();
+                // Add placeholder at start of next block
+                encodedData.push_back(0x00);
 
-            int encodedDataPos = 0;
+                startOfCurrBlock = encodedData.size() - 1;
 
-            while (encodedDataPos < encodedData.size()) {
-
-                int numElementsInBlock = encodedData[encodedDataPos] - 1;
-                encodedDataPos++;
-
-                // Copy across all bytes within block
-                for (int i = 0; i < numElementsInBlock; i++) {
-                    uint8_t byteOfData = encodedData[encodedDataPos];
-                    if (byteOfData == 0x00) {
-                        decodedData.clear();
-                        throw CobsDecodingFailed(encodedData);
-                    }
-
-                    decodedData.push_back(encodedData[encodedDataPos]);
-                    encodedDataPos++;
-                }
-
-                if (encodedData[encodedDataPos] == 0x00) {
-                    // End of packet found!
-                    break;
-                }
-
-                // We only add a 0x00 byte to the decoded data
-                // IF the num. of elements in block was less than 254.
-                // If num. elements in block is max (254), then we know that
-                // the block was created due to it reaching maximum size, not because
-                // a 0x00 was found
-                if(numElementsInBlock < 0xFE) {
-                    decodedData.push_back(0x00);
-                }
+                // Reset count of num. elements in current block
+                numElementsInCurrBlock = 0;
             }
         }
-    } // namespace SerialFiller
+        it++;
+    }
+
+    // Finish the last block
+    // Insert pointer to the terminating 0x00 character
+    encodedData[startOfCurrBlock] = numElementsInCurrBlock + 1;
+    encodedData.push_back(0x00);
+}
+
+void CobsTranscoder::Decode(const ByteArray& encodedData, ByteArray& decodedData)
+{
+    decodedData.clear();
+
+    size_t encodedDataPos = 0;
+
+    while (encodedDataPos < encodedData.size()) {
+        int numElementsInBlock = (uint8_t) encodedData[encodedDataPos] - 1;
+        encodedDataPos++;
+
+        // Copy across all bytes within block
+        for (int i = 0; i < numElementsInBlock; i++) {
+            uint8_t byteOfData = encodedData[encodedDataPos];
+            if (byteOfData == 0x00) {
+                decodedData.clear();
+                //throw CobsDecodingFailed(encodedData);
+                std::cout << config_TERM_TEXT_COLOUR_RED << "COBS decoding failed for packet."
+                          << config_TERM_TEXT_FORMAT_NORMAL << std::endl;
+                return;
+            }
+
+            decodedData.push_back(encodedData[encodedDataPos]);
+            encodedDataPos++;
+        }
+
+        if (encodedData[encodedDataPos] == 0x00) {
+            // End of packet found!
+            break;
+        }
+
+        // We only add a 0x00 byte to the decoded data
+        // IF the num. of elements in block was less than 254.
+        // If num. elements in block is max (254), then we know that
+        // the block was created due to it reaching maximum size, not because
+        // a 0x00 was found
+        if (numElementsInBlock < 0xFE) {
+            decodedData.push_back(0x00);
+        }
+    }
+}
+} // namespace SerialFiller
 } // namespace mn

@@ -9,11 +9,17 @@
 ///		See README.md in root dir for more info.
 
 #include "SerialFiller/SerialFiller.hpp"
+#include "SerialFiller/Exceptions/NotEnoughBytes.hpp"
+#include "SerialFiller/Exceptions/CobsDecodingFailed.hpp"
+#include "SerialFiller/Exceptions/CobsDecodingFailed.hpp"
+#include "SerialFiller/Exceptions/CrcCheckFailed.hpp"
+#include "SerialFiller/Exceptions/LengthOfTopicTooLong.hpp"
+#include <vector>
 
 using namespace mn::SerialFiller;
 
 int main() {
-
+#if 0
     SerialFiller serialFiller;
 
     // Connect the I/O together, to make
@@ -47,7 +53,7 @@ int main() {
     });
 
     serialFiller.Publish("mytopic", {0x01, 0x02, 0x03});
-
+#endif
     return 0;
 
 }

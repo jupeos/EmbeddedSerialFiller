@@ -11,17 +11,30 @@
 #ifndef MN_SERIAL_FILLER_DEFINITIONS_H_
 #define MN_SERIAL_FILLER_DEFINITIONS_H_
 
-// System includes
-#include <cstdint>
-#include <memory>
-#include <queue>
-#include <vector>
+#include <etl/cstring.h>
+#include <etl/vector.h>
+
+#define MAX_PACKET_SIZE 64
+#define MAX_TOP_LENGTH 8
+#define MAX_SUBSCRIBERS 8
+#define MAX_PENDING_ACKS 8
+// Log related.
+#define MAX_LOGGER_NAME_LENGTH 32
+#define MAX_LOG_LINE_LENGTH 512
+#define MAX_LOG_MESSAGE_LENGTH 32
+#define MAX_LOG_FILE_NAME_LENGTH 32
+#define MAX_LOG_FUNCTION_NAME_LENGTH 32
+#define MSG(X) etl::string<MAX_LOG_MESSAGE_LENGTH>(X)
+
+#define MAX_HEX_STRING_LENGTH 16
+#define MAX_ASCII_STRING_LENGTH 16
 
 namespace mn {
-    namespace SerialFiller {
-        using ByteArray = std::vector<uint8_t>;
-        using ByteQueue = std::deque<uint8_t>;
-    }
-}
+namespace SerialFiller {
+using ByteArray = etl::vector<uint8_t, MAX_PACKET_SIZE>;
+using ByteQueue = ByteArray;
+using Topic     = etl::string<MAX_TOP_LENGTH>;
+} // namespace SerialFiller
+} // namespace mn
 
 #endif // #ifndef MN_SERIAL_FILLER_DEFINITIONS_H_

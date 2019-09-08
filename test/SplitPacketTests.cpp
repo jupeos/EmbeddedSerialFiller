@@ -11,6 +11,7 @@
 #include "gtest/gtest.h"
 #include "SerialFiller/SerialFiller.hpp"
 #include "SerialFiller/SerialFillerHelper.hpp"
+#include "SerialFiller/Exceptions/LengthOfTopicTooLong.hpp"
 
 using namespace mn::SerialFiller;
 
@@ -29,9 +30,8 @@ namespace {
     TEST_F(SplitPacketTests, BasicTest) {
         // The "12" at the end of the string is a fake (and incorrect) CRC
         // value, but this doesn't matter as SplitPacket does not validate the CRC
-        std::string packetAsString = { 0x01, 0x00, 0x01, 0x04, 't', 'e', 's', 't', 'h', 'e', 'l', 'l', 'o', 0x01, 0x01};
-        auto packet = ByteArray(packetAsString.begin(), packetAsString.end());
-        auto topic = std::string();
+        auto packet = ByteArray({ 0x01, 0x00, 0x01, 0x04, 't', 'e', 's', 't', 'h', 'e', 'l', 'l', 'o', 0x01, 0x01 });
+        Topic topic;
         auto data = ByteArray();
         SerialFillerHelper::SplitPacket(packet, 3, topic, data);
         EXPECT_EQ("test", topic);
@@ -40,7 +40,7 @@ namespace {
 
     TEST_F(SplitPacketTests, BogusTopicLength) {
         auto packet = ByteArray({ 0x01, 0x00, 0x01, 0x06, 0x02, 0x03 });
-        auto topic = std::string();
+		Topic topic;
         auto data = ByteArray();
         EXPECT_THROW(SerialFillerHelper::SplitPacket(packet, 3, topic, data), LengthOfTopicTooLong);
         EXPECT_EQ("", topic);

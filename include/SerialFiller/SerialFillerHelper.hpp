@@ -13,43 +13,35 @@
 
 // System includes
 #include <cstdint>
-#include <functional>
-#include <iostream>
-#include <map>
-#include <vector>
 
 // Local includes
 #include "SerialFiller/Definitions.hpp"
 
 namespace mn {
-    namespace SerialFiller {
+namespace SerialFiller {
 
+class SerialFillerHelper
+{
+public:
+    static void SplitPacket(const ByteArray& packet,
+                            uint32_t         startAt,
+                            Topic&           topic,
+                            ByteArray&       data);
 
-        class SerialFillerHelper {
-        public:
+    /// \details    Moves new RX data into the RX buffer, while looking for the
+    ///             end-of-frame character. If EOF is found, packet is populated
+    ///             and this method returns.
+    static void MoveRxDataInBuffer(ByteArray& newRxData, ByteArray& rxDataBuffer, ByteArray& packet);
 
-            static void SplitPacket(const ByteArray &packet, uint32_t startAt, std::string &topic, ByteArray &data);
+    static void AddCrc(ByteArray& packet);
 
-            /// \details    Moves new RX data into the RX buffer, while looking for the
-            ///             end-of-frame character. If EOF is found, packet is populated
-            ///             and this method returns.
-            static void MoveRxDataInBuffer(
-                    ByteQueue &newRxData,
-                    ByteQueue &rxDataBuffer,
-                    ByteArray &packet);
+    /// \param  packet  Packet must be COBS decoded before passing into here. Expects
+    ///                 last two bytes to be the CRC value of all the bytes proceeding it.
+    static bool VerifyCrc(const ByteArray& packet);
 
-
-            static void AddCrc(ByteArray &packet);
-
-            /// \param  packet  Packet must be COBS decoded before passing into here. Expects
-            ///                 last two bytes to be the CRC value of all the bytes proceeding it.
-            static bool VerifyCrc(const ByteArray &packet);
-
-
-        private:
-
-        };
-    }
-}
+private:
+};
+} // namespace SerialFiller
+} // namespace mn
 
 #endif // #ifndef MN_SERIAL_FILLER_SERIAL_FILLER_HELPER_H_

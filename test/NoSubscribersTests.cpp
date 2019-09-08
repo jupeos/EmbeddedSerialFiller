@@ -6,6 +6,8 @@ using namespace mn::SerialFiller;
 
 namespace {
 
+	auto emptyLambda = [](ByteArray& data) { };
+
     class NoSubscribersTests : public ::testing::Test {
     protected:
 
@@ -31,13 +33,13 @@ namespace {
 
         // Add listener to "no subscribers for topic" event
         bool listenerCalled = false;
-        std::string savedTopic;
+        Topic savedTopic;
         ByteArray savedData;
-        serialFiller.noSubscribersForTopic_.AddListener([&](std::string topic, ByteArray data) {
+        serialFiller.noSubscribersForTopic_ = [&](Topic topic, ByteArray data) {
             listenerCalled = true;
             savedTopic = topic;
             savedData = data;
-        });
+        };
 
         // Publish data on topic
         serialFiller.Publish("BogusTopic", { 'h', 'e', 'l', 'l', 'o'});
@@ -55,19 +57,17 @@ namespace {
 
         // Add listener to "no subscribers for topic" event
         bool listenerCalled = false;
-        std::string savedTopic;
+        Topic savedTopic;
         ByteArray savedData;
-        serialFiller.noSubscribersForTopic_.AddListener([&](std::string topic, ByteArray data) {
+        serialFiller.noSubscribersForTopic_ = [&](Topic topic, ByteArray data) {
             listenerCalled = true;
             savedTopic = topic;
             savedData = data;
-        });
+        };
 
         // Subscribe to TestTopic, so that the "no subscribers" event
         // should not be fired
-        serialFiller.Subscribe("TestTopic", [&](ByteArray data) {
-            // do nothing
-        });
+        serialFiller.Subscribe("TestTopic", etl::delegate<void(ByteArray& data)>(emptyLambda));
 
         // Publish data on topic
         serialFiller.Publish("TestTopic", { 'h', 'e', 'l', 'l', 'o'});

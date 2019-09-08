@@ -2,6 +2,7 @@
 
 #include "SerialFiller/SerialFiller.hpp"
 #include "SerialFiller/CobsTranscoder.hpp"
+#include "SerialFiller/Exceptions/CobsDecodingFailed.hpp"
 
 using namespace mn::SerialFiller;
 

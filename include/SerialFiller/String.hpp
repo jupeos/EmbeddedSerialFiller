@@ -17,62 +17,38 @@
 #include <sstream>
 
 namespace mn {
-    namespace CppUtils {
+namespace CppUtils {
 
-        /// \brief      Contains static methods for converting various objects to strings.
-        class String {
+/// \brief      Contains static methods for converting various objects to strings.
+class String
+{
+public:
+    //etl::to_string(int8_t(127), str, Format().base(16).width(2).fill(STR('0'))));
+    template<typename T>
+    static std::string ToHex(T iterable)
+    {
+        // Special formatting when there are no values
+        if (iterable.begin() == iterable.end())
+            return "{}";
 
-        public:
+        std::stringstream stream;
+        stream << "{ ";
 
-            static std::string ToHex(uint32_t hexVal, uint8_t numHexChars) {
-                std::stringstream output;
-                output << "0x" << std::hex << std::uppercase << std::setw(numHexChars) << std::setfill('0') << hexVal;
-                return output.str();
-            }
-
-            template<typename T>
-            static std::string ToHex(T iterable) {
-
-                // Special formatting when there are no values
-                if(iterable.begin() == iterable.end())
-                    return "{}";
-
-                std::stringstream stream;
-                stream << "{ ";
-                for(auto it = iterable.begin(); it != iterable.end(); ++it) {
-                    stream << "0x"
-                           << std::setfill('0') << std::setw(sizeof(typename T::value_type) * 2)
-                           << std::uppercase << std::hex << (int)(*it);
-                    if(it != iterable.end() - 1)
-                        stream << ", ";
-                }
-                stream << " }";
-                return stream.str();
-            }
-
-            template<typename T>
-            static std::string ToAscii(T iterable) {
-
-                // Special formatting when there are no values
-                if(iterable.begin() == iterable.end())
-                    return "{}";
-
-                std::stringstream stream;
-                stream << "{ ";
-                for(auto it = iterable.begin(); it != iterable.end(); ++it) {
-                    stream << "'" << static_cast<char>(*it) << "'";
-                    if(it != iterable.end() - 1)
-                        stream << ", ";
-                }
-                stream << " }";
-                return stream.str();
-            }
-
-
-
-        };
-    } // namespace CppUtils
+        auto it   = iterable.begin();
+        auto end  = iterable.end();
+        auto last = end--;
+        for (it; it != end; ++it) {
+            stream << "0x" << std::setfill('0') << std::setw(sizeof(typename T::value_type) * 2)
+                   << std::uppercase << std::hex << (int) (*it);
+            //if(it != iterable.end() - 1)
+            if (it != last)
+                stream << ", ";
+        }
+        stream << " }";
+        return stream.str();
+    }
+};
+} // namespace CppUtils
 } // namespace mn
-
 
 #endif // #ifndef MN_CPP_UTILS_STRING_H_

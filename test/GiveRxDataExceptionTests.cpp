@@ -4,7 +4,7 @@
 
 // User includes
 #include "SerialFiller/SerialFiller.hpp"
-#include "SerialFiller/Exceptions/LengthOfTopicTooLong.hpp"
+#include "SerialFiller/Exceptions/CrcCheckFailed.hpp"
 
 using namespace mn::SerialFiller;
 

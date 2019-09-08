@@ -20,9 +20,20 @@
 using namespace mn::SerialFiller;
 
 namespace {
+	static ByteArray savedData1;
+	auto dataStore1 = [](ByteArray& data) { savedData1 = data; };
+	static ByteArray savedData2;
+	auto dataStore2 = [](ByteArray& data) { savedData2 = data; };
 
 // The fixture for testing class Foo.
     class TwoNodeAckTests : public ::testing::Test {
+	public:
+		void operator()(ByteArray& data) {
+			// This should test that the node2 mutex is unlocked before calling any subscribed callbacks
+			// otherwise we would get into deadlock on this call
+			node2_.serialFiller_.Publish("response", { 0x02 });
+			savedData2 = data;
+		}
     protected:
 
 
@@ -33,16 +44,18 @@ namespace {
 
             // Connect node 1 output to node 2 input and vise versa
             node1_.serialFiller_.txDataReady_ = ([&](ByteQueue txData) -> void {
-                while(txData.size()) {
-                    node2_.rxQueue_.Push(txData.front());
-                    txData.pop_front();
-                }
+				for(ByteQueue::const_iterator iter = txData.begin(); iter != txData.end(); ++iter)
+				{
+					node2_.rxQueue_.Push(*iter);
+				}
+				txData.clear();
             });
             node2_.serialFiller_.txDataReady_ = ([&](ByteQueue txData) -> void {
-                while(txData.size()) {
-                    node1_.rxQueue_.Push(txData.front());
-                    txData.pop_front();
-                }
+				for (ByteQueue::const_iterator iter = txData.begin(); iter != txData.end(); ++iter)
+				{
+					node1_.rxQueue_.Push(*iter);
+				}
+				txData.clear();
             });
         }
 
@@ -55,10 +68,7 @@ namespace {
         auto data = ByteArray();
 
         // Subscribe to a test topic
-        ByteArray savedData;
-        node2_.serialFiller_.Subscribe("test-topic", [&](ByteArray data) -> void {
-            savedData = data;
-        });
+        node2_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore1));
 
         auto dataToSend = ByteArray({ 0x01, 0x02, 0x03, 0x04 });
 
@@ -66,7 +76,7 @@ namespace {
         auto gotAck = node1_.serialFiller_.PublishWait("test-topic", dataToSend, std::chrono::milliseconds(1000));
 
         EXPECT_TRUE(gotAck);
-        EXPECT_EQ(dataToSend, savedData);
+        EXPECT_EQ(dataToSend, savedData1);
         EXPECT_EQ(0, node1_.serialFiller_.NumThreadsWaiting());
     }
 
@@ -75,10 +85,7 @@ namespace {
         auto data = ByteArray();
 
         // Subscribe to a test topic
-        ByteArray savedData;
-        node2_.serialFiller_.Subscribe("test-topic", [&](ByteArray data) -> void {
-            savedData = data;
-        });
+        node2_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore1));
 
         node2_.serialFiller_.SetAckEnabled(false);
 
@@ -86,7 +93,7 @@ namespace {
         auto dataToSend = ByteArray({ 0x01, 0x02, 0x03, 0x04 });
         auto gotAck = node1_.serialFiller_.PublishWait("test-topic", dataToSend, std::chrono::milliseconds(1000));
         EXPECT_FALSE(gotAck);
-        EXPECT_EQ(dataToSend, savedData);
+        EXPECT_EQ(dataToSend, savedData1);
     }
 
     TEST_F(TwoNodeAckTests, TwoWayTest) {
@@ -94,14 +101,8 @@ namespace {
         auto data = ByteArray();
 
         // Subscribe to a test topic
-        ByteArray savedNode1Data;
-        node1_.serialFiller_.Subscribe("test-topic", [&](ByteArray data) -> void {
-            savedNode1Data = data;
-        });
-        ByteArray savedNode2Data;
-        node2_.serialFiller_.Subscribe("test-topic", [&](ByteArray data) -> void {
-            savedNode2Data = data;
-        });
+        node1_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore1));
+        node2_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore2));
 
         // Publish data on topic
         auto node1DataToSend = ByteArray({ 0x01, 0x02, 0x03, 0x04 });
@@ -121,8 +122,8 @@ namespace {
 
         EXPECT_TRUE(node1GotAck);
         EXPECT_TRUE(node2GotAck);
-        EXPECT_EQ(node1DataToSend, savedNode2Data);
-        EXPECT_EQ(node2DataToSend, savedNode1Data);
+        EXPECT_EQ(node1DataToSend, savedData1);
+        EXPECT_EQ(node2DataToSend, savedData2);
     }
 
     TEST_F(TwoNodeAckTests, TwoPublishWaitCalls) {
@@ -130,14 +131,8 @@ namespace {
         auto data = ByteArray();
 
         // Subscribe to two topics
-        ByteArray savedMsg1Data;
-        node2_.serialFiller_.Subscribe("topic1", [&](ByteArray data) -> void {
-            savedMsg1Data = data;
-        });
-        ByteArray savedMsg2Data;
-        node2_.serialFiller_.Subscribe("topic2", [&](ByteArray data) -> void {
-            savedMsg2Data = data;
-        });
+        node2_.serialFiller_.Subscribe("topic1", etl::delegate<void(ByteArray& data)>(dataStore1));
+        node2_.serialFiller_.Subscribe("topic2", etl::delegate<void(ByteArray& data)>(dataStore2));
 
 
         // Publish data on both topics
@@ -158,8 +153,8 @@ namespace {
 
         EXPECT_TRUE(msg1GotAck);
         EXPECT_TRUE(msg2GotAck);
-        EXPECT_EQ(msg1Data, savedMsg1Data);
-        EXPECT_EQ(msg2Data, savedMsg2Data);
+        EXPECT_EQ(msg1Data, savedData1);
+        EXPECT_EQ(msg2Data, savedData2);
     }
 
     TEST_F(TwoNodeAckTests, SubscribeCallsPublish) {
@@ -167,26 +162,16 @@ namespace {
         auto data = ByteArray();
 
         // Subscribe to a test topic
-        ByteArray savedNode1Data;
-        node1_.serialFiller_.Subscribe("response", [&](ByteArray data) -> void {
-            savedNode1Data = data;
-        });
-
-        ByteArray savedNode2Data;
-        node2_.serialFiller_.Subscribe("request", [&](ByteArray data) -> void {
-            // This should test that the node2 mutex is unlocked before calling any subscribed callbacks
-            // otherwise we would get into deadlock on this call
-            node2_.serialFiller_.Publish("response", { 0x02 });
-            savedNode2Data = data;
-        });
+        node1_.serialFiller_.Subscribe("response", etl::delegate<void(ByteArray& data)>(dataStore1));
+        node2_.serialFiller_.Subscribe("request", etl::delegate<void(ByteArray& data)>(*this));
 
         bool node1GotAck = node1_.serialFiller_.PublishWait("request", { 0x01 }, std::chrono::milliseconds(5000));
 
         node2_.Join();
 
         EXPECT_TRUE(node1GotAck);
-        EXPECT_EQ(ByteArray({ 0x02 }), savedNode1Data);
-        EXPECT_EQ(ByteArray({ 0x01 }), savedNode2Data);
+        EXPECT_EQ(ByteArray({ 0x02 }), savedData1);
+        EXPECT_EQ(ByteArray({ 0x01 }), savedData2);
     }
 
 }  // namespace
