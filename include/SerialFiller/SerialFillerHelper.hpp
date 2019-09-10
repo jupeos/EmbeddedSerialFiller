@@ -11,11 +11,8 @@
 #ifndef MN_SERIAL_FILLER_SERIAL_FILLER_HELPER_H_
 #define MN_SERIAL_FILLER_SERIAL_FILLER_HELPER_H_
 
-// System includes
-#include <cstdint>
-
-// Local includes
 #include "SerialFiller/Definitions.hpp"
+#include <cstdint>
 
 namespace mn {
 namespace SerialFiller {
@@ -23,10 +20,7 @@ namespace SerialFiller {
 class SerialFillerHelper
 {
 public:
-    static void SplitPacket(const ByteArray& packet,
-                            uint32_t         startAt,
-                            Topic&           topic,
-                            ByteArray&       data);
+    static StatusCode SplitPacket(const ByteArray& packet, uint32_t startAt, Topic& topic, ByteArray& data);
 
     /// \details    Moves new RX data into the RX buffer, while looking for the
     ///             end-of-frame character. If EOF is found, packet is populated
@@ -37,7 +31,7 @@ public:
 
     /// \param  packet  Packet must be COBS decoded before passing into here. Expects
     ///                 last two bytes to be the CRC value of all the bytes proceeding it.
-    static bool VerifyCrc(const ByteArray& packet);
+    static StatusCode VerifyCrc(const ByteArray& packet);
 
 private:
 };

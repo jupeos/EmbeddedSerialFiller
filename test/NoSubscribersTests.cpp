@@ -16,12 +16,14 @@ namespace {
         NoSubscribersTests() {
 
             // Connect output to input (software loopback)
-            serialFiller.txDataReady_ = ([&](ByteQueue txData) -> void {
-                serialFiller.GiveRxData(txData);
-            });
-
-            serialFiller.SetThreadSafetyEnabled(false);
+			serialFiller.txDataReady_ = etl::delegate<void(const ByteQueue&)>::create<NoSubscribersTests, &NoSubscribersTests::loopbackHandler>(*this);
+			serialFiller.SetThreadSafetyEnabled(false);
         }
+
+		void loopbackHandler(const ByteQueue& data)
+		{
+			serialFiller.GiveRxData(const_cast<ByteQueue&>(data));
+		}
 
         virtual ~NoSubscribersTests() {
         }

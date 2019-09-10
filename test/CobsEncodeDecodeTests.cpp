@@ -2,7 +2,6 @@
 
 #include "SerialFiller/SerialFiller.hpp"
 #include "SerialFiller/CobsTranscoder.hpp"
-#include "SerialFiller/Exceptions/CobsDecodingFailed.hpp"
 
 using namespace mn::SerialFiller;
 
@@ -64,14 +63,14 @@ namespace {
         // Encoded data is incorrectly formed, 0x02 states there should be 1 byte of valid data following,
         // but next byte is 0x00 (end of frame)
         ByteArray decodedData;
-        EXPECT_THROW(CobsTranscoder::Decode(ByteArray({0x02, 0x00, 0x00}), decodedData), CobsDecodingFailed);
+        EXPECT_EQ(CobsTranscoder::Decode(ByteArray({0x02, 0x00, 0x00}), decodedData), StatusCode::ERROR_ZERO_BYTE_NOT_EXPECTED);
         EXPECT_EQ(ByteArray(), decodedData);
     }
 
     TEST_F(CobsEncodeDecodeTest, IncorrectDecodeTest2) {
         // Error here is the 0x00 after 0x03
         ByteArray decodedData;
-        EXPECT_THROW(CobsTranscoder::Decode(ByteArray({0x02, 0xAA, 0x03, 0x00, 0xAB}), decodedData), CobsDecodingFailed);
+        EXPECT_EQ(CobsTranscoder::Decode(ByteArray({0x02, 0xAA, 0x03, 0x00, 0xAB}), decodedData), StatusCode::ERROR_ZERO_BYTE_NOT_EXPECTED);
         EXPECT_EQ(ByteArray(), decodedData);
     }
 

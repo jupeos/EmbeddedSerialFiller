@@ -11,9 +11,9 @@
 #ifndef MN_SERIAL_FILLER_LOGGER_H_
 #define MN_SERIAL_FILLER_LOGGER_H_
 
-#include <string>
 #include <functional>
 #include <memory>
+#include <string>
 
 namespace mn {
 namespace SerialFiller {
@@ -21,11 +21,7 @@ namespace SerialFiller {
 #if defined(ENABLE_LOGGING)
 #define LOG(logger, severity, msg) \
     if (Logger::instance) { \
-        Logger::instance->MacroWillCall(msg, \
-                                        Logger::Severity::severity, \
-                                        __FILE__, \
-                                        __LINE__, \
-                                        __FUNCTION__); \
+        Logger::instance->MacroWillCall(msg, Logger::Severity::severity, __FILE__, __LINE__, __FUNCTION__); \
     }
 #else
 #define LOG(logger, severity, msg)
@@ -33,44 +29,26 @@ namespace SerialFiller {
 
 #define config_TERM_ESCAPE_CODE "\x1B["
 
-#define config_TERM_TEXT_FORMAT_NORMAL \
-    config_TERM_ESCAPE_CODE "0m" //!< Returns text to normal formatting. Widely supported.
+#define config_TERM_TEXT_FORMAT_NORMAL config_TERM_ESCAPE_CODE "0m" //!< Returns text to normal formatting. Widely supported.
 
-#define config_TERM_TEXT_COLOUR_BLACK \
-    config_TERM_ESCAPE_CODE "30m" //!< Black text. Widely supported.
-#define config_TERM_TEXT_COLOUR_LIGHT_RED \
-    config_TERM_ESCAPE_CODE "91m" //!< Red text. Widely supported.
-#define config_TERM_TEXT_COLOUR_LIGHT_GREEN \
-    config_TERM_ESCAPE_CODE "92m" //!< Green text. Widely supported.
-#define config_TERM_TEXT_COLOUR_LIGHT_YELLOW \
-    config_TERM_ESCAPE_CODE "93m" //!< Yellow text. Widely supported.
-#define config_TERM_TEXT_COLOUR_LIGHT_BLUE \
-    config_TERM_ESCAPE_CODE "94m" //!< Blue text. Widely supported.
-#define config_TERM_TEXT_COLOUR_LIGHT_PURPLE \
-    config_TERM_ESCAPE_CODE "95m" //!< Purple text. Widely supported.
-#define config_TERM_TEXT_COLOUR_LIGHT_CYAN \
-    config_TERM_ESCAPE_CODE "96m" //!< Cyan text. Widely supported.
-#define config_TERM_TEXT_COLOUR_LIGHT_GREY \
-    config_TERM_ESCAPE_CODE "37m" //!< Light grey text. Widely supported.
-#define config_TERM_TEXT_COLOUR_DEFAULT \
-    config_TERM_ESCAPE_CODE "39m" //!< default coloured text. Widely supported.
+#define config_TERM_TEXT_COLOUR_BLACK config_TERM_ESCAPE_CODE "30m"        //!< Black text. Widely supported.
+#define config_TERM_TEXT_COLOUR_LIGHT_RED config_TERM_ESCAPE_CODE "91m"    //!< Red text. Widely supported.
+#define config_TERM_TEXT_COLOUR_LIGHT_GREEN config_TERM_ESCAPE_CODE "92m"  //!< Green text. Widely supported.
+#define config_TERM_TEXT_COLOUR_LIGHT_YELLOW config_TERM_ESCAPE_CODE "93m" //!< Yellow text. Widely supported.
+#define config_TERM_TEXT_COLOUR_LIGHT_BLUE config_TERM_ESCAPE_CODE "94m"   //!< Blue text. Widely supported.
+#define config_TERM_TEXT_COLOUR_LIGHT_PURPLE config_TERM_ESCAPE_CODE "95m" //!< Purple text. Widely supported.
+#define config_TERM_TEXT_COLOUR_LIGHT_CYAN config_TERM_ESCAPE_CODE "96m"   //!< Cyan text. Widely supported.
+#define config_TERM_TEXT_COLOUR_LIGHT_GREY config_TERM_ESCAPE_CODE "37m"   //!< Light grey text. Widely supported.
+#define config_TERM_TEXT_COLOUR_DEFAULT config_TERM_ESCAPE_CODE "39m"      //!< default coloured text. Widely supported.
 
-#define config_TERM_TEXT_COLOUR_DARK_GREY \
-    config_TERM_ESCAPE_CODE "90m" //!< Grey text. Widely supported.
-#define config_TERM_TEXT_COLOUR_RED \
-    config_TERM_ESCAPE_CODE "31m" //!< Red (light red, bold) text. Widely supported.
-#define config_TERM_TEXT_COLOUR_GREEN \
-    config_TERM_ESCAPE_CODE "32m" //!< Light green (bold) text. Widely supported.
-#define config_TERM_TEXT_COLOUR_YELLOW \
-    config_TERM_ESCAPE_CODE "33m" //!< Light yellow (bold) text. Widely supported.
-#define config_TERM_TEXT_COLOUR_BLUE \
-    config_TERM_ESCAPE_CODE "34m" //!< Light blue (bold) text. Widely supported.
-#define config_TERM_TEXT_COLOUR_PURPLE \
-    config_TERM_ESCAPE_CODE "35m" //!< Light purple (bold) text. Widely supported.
-#define config_TERM_TEXT_COLOUR_CYAN \
-    config_TERM_ESCAPE_CODE "36m" //!< Light cyan (bold) text. Widely supported.
-#define config_TERM_TEXT_COLOUR_WHITE \
-    config_TERM_ESCAPE_CODE "97m" //!< White text. Widely supported.
+#define config_TERM_TEXT_COLOUR_DARK_GREY config_TERM_ESCAPE_CODE "90m" //!< Grey text. Widely supported.
+#define config_TERM_TEXT_COLOUR_RED config_TERM_ESCAPE_CODE "31m"       //!< Red (light red, bold) text. Widely supported.
+#define config_TERM_TEXT_COLOUR_GREEN config_TERM_ESCAPE_CODE "32m"     //!< Light green (bold) text. Widely supported.
+#define config_TERM_TEXT_COLOUR_YELLOW config_TERM_ESCAPE_CODE "33m"    //!< Light yellow (bold) text. Widely supported.
+#define config_TERM_TEXT_COLOUR_BLUE config_TERM_ESCAPE_CODE "34m"      //!< Light blue (bold) text. Widely supported.
+#define config_TERM_TEXT_COLOUR_PURPLE config_TERM_ESCAPE_CODE "35m"    //!< Light purple (bold) text. Widely supported.
+#define config_TERM_TEXT_COLOUR_CYAN config_TERM_ESCAPE_CODE "36m"      //!< Light cyan (bold) text. Widely supported.
+#define config_TERM_TEXT_COLOUR_WHITE config_TERM_ESCAPE_CODE "97m"     //!< White text. Widely supported.
 
 class Logger
 {
@@ -84,8 +62,6 @@ public:
     };
 
     enum class Color { NONE, RED, GREEN, YELLOW, BLUE, PURPLE, CYAN, CUSTOM };
-
-    static std::shared_ptr<Logger> instance;
 
     Logger(std::string name, Severity logLevel, Color color, std::function<void(std::string)> output)
     {
@@ -112,11 +88,7 @@ public:
     //
     //            }
 
-    inline void MacroWillCall(std::string msg,
-                              Severity    severity,
-                              std::string fileName,
-                              int         lineNum,
-                              std::string functionName)
+    inline void MacroWillCall(std::string msg, Severity severity, std::string fileName, int lineNum, std::string functionName)
     {
         // Compare severities, only continue if message severity is higher or
         // equal to current log level
@@ -130,21 +102,17 @@ public:
             if (severity == Severity::WARNING) {
                 startColorText = GetColorString(warningColor_);
                 endColorText   = config_TERM_TEXT_FORMAT_NORMAL;
-            }
-            else if (severity == Severity::ERROR) {
+            } else if (severity == Severity::ERROR) {
                 startColorText = GetColorString(errorColor_);
                 endColorText   = config_TERM_TEXT_FORMAT_NORMAL;
-            }
-            else {
+            } else {
                 startColorText = GetColorString(normalColor_);
                 endColorText   = config_TERM_TEXT_FORMAT_NORMAL;
             }
         }
 
         std::string formattedMsg;
-        formattedMsg += startColorText + name_ + " (" + fileName + ", " + std::to_string(lineNum)
-                        + ", " + functionName + "()). " + ToString(severity) + ": " + msg
-                        + endColorText;
+        formattedMsg += startColorText + name_ + " (" + fileName + ", " + std::to_string(lineNum) + ", " + functionName + "()). " + ToString(severity) + ": " + msg + endColorText;
         output_(formattedMsg);
     }
 

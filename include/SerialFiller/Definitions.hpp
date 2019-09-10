@@ -14,26 +14,19 @@
 #include <etl/cstring.h>
 #include <etl/vector.h>
 
-#define MAX_PACKET_SIZE 270
-#define MAX_TOP_LENGTH 16
+#define MAX_PACKET_SIZE 512
+#define MAX_TOPIC_LENGTH 16
 #define MAX_SUBSCRIBERS 8
 #define MAX_PENDING_ACKS 8
-// Log related.
-#define MAX_LOGGER_NAME_LENGTH 32
-#define MAX_LOG_LINE_LENGTH 512
-#define MAX_LOG_MESSAGE_LENGTH 32
-#define MAX_LOG_FILE_NAME_LENGTH 32
-#define MAX_LOG_FUNCTION_NAME_LENGTH 32
-#define MSG(X) etl::string<MAX_LOG_MESSAGE_LENGTH>(X)
-
-#define MAX_HEX_STRING_LENGTH 16
-#define MAX_ASCII_STRING_LENGTH 16
 
 namespace mn {
 namespace SerialFiller {
+
 using ByteArray = etl::vector<uint8_t, MAX_PACKET_SIZE>;
 using ByteQueue = ByteArray;
-using Topic     = etl::string<MAX_TOP_LENGTH>;
+using Topic     = etl::string<MAX_TOPIC_LENGTH>;
+enum class StatusCode { SUCCESS, ERROR_CRC_CHECK_FAILED, ERROR_NOT_ENOUGH_BYTES, ERROR_UNRECOGNISED_PACKET_TYPE, ERROR_AUTO_ACK_DISABLED, ERROR_LENGTH_OF_TOPIC_TOO_LONG, ERROR_UNRECOGNISED_SUBSCRIBER, ERROR_ZERO_BYTE_NOT_EXPECTED };
+
 } // namespace SerialFiller
 } // namespace mn
 

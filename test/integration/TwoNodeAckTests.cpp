@@ -21,9 +21,13 @@ using namespace mn::SerialFiller;
 
 namespace {
 	static ByteArray savedData1;
-	auto dataStore1 = [](ByteArray& data) { savedData1 = data; };
+	auto dataStore1 = [](ByteArray& data) {
+		savedData1 = data;
+	};
 	static ByteArray savedData2;
-	auto dataStore2 = [](ByteArray& data) { savedData2 = data; };
+	auto dataStore2 = [](ByteArray& data) { 
+		savedData2 = data;
+	};
 
 // The fixture for testing class Foo.
     class TwoNodeAckTests : public ::testing::Test {
@@ -41,23 +45,30 @@ namespace {
         Node node2_;
 
         TwoNodeAckTests() : node1_("node1"), node2_("node2") {
-
-            // Connect node 1 output to node 2 input and vise versa
-            node1_.serialFiller_.txDataReady_ = ([&](ByteQueue txData) -> void {
-				for(ByteQueue::const_iterator iter = txData.begin(); iter != txData.end(); ++iter)
-				{
-					node2_.rxQueue_.Push(*iter);
-				}
-				txData.clear();
-            });
-            node2_.serialFiller_.txDataReady_ = ([&](ByteQueue txData) -> void {
-				for (ByteQueue::const_iterator iter = txData.begin(); iter != txData.end(); ++iter)
-				{
-					node1_.rxQueue_.Push(*iter);
-				}
-				txData.clear();
-            });
+			// Connect node 1 output to node 2 input and vise versa
+			node1_.serialFiller_.txDataReady_ = etl::delegate<void(const ByteQueue&)>::create<TwoNodeAckTests, &TwoNodeAckTests::loopbackHandler1>(*this);
+			node2_.serialFiller_.txDataReady_ = etl::delegate<void(const ByteQueue&)>::create<TwoNodeAckTests, &TwoNodeAckTests::loopbackHandler2>(*this);
         }
+
+		void loopbackHandler1(const ByteQueue& data)
+		{
+			for (ByteQueue::const_iterator iter = data.begin(); iter != data.end(); ++iter)
+			{
+				node2_.rxQueue_.Push(*iter);
+			}
+			ByteQueue& data2 = const_cast<ByteQueue&>(data);
+			data2.clear();
+		}
+
+		void loopbackHandler2(const ByteQueue& data)
+		{
+			for (ByteQueue::const_iterator iter = data.begin(); iter != data.end(); ++iter)
+			{
+				node1_.rxQueue_.Push(*iter);
+			}
+			ByteQueue& data2 = const_cast<ByteQueue&>(data);
+			data2.clear();
+		}
 
         virtual ~TwoNodeAckTests() {
         }
@@ -68,7 +79,7 @@ namespace {
         auto data = ByteArray();
 
         // Subscribe to a test topic
-        node2_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore1));
+        node2_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore2));
 
         auto dataToSend = ByteArray({ 0x01, 0x02, 0x03, 0x04 });
 
@@ -76,7 +87,7 @@ namespace {
         auto gotAck = node1_.serialFiller_.PublishWait("test-topic", dataToSend, std::chrono::milliseconds(1000));
 
         EXPECT_TRUE(gotAck);
-        EXPECT_EQ(dataToSend, savedData1);
+        EXPECT_EQ(dataToSend, savedData2);
         EXPECT_EQ(0, node1_.serialFiller_.NumThreadsWaiting());
     }
 
@@ -85,7 +96,7 @@ namespace {
         auto data = ByteArray();
 
         // Subscribe to a test topic
-        node2_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore1));
+        node2_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore2));
 
         node2_.serialFiller_.SetAckEnabled(false);
 
@@ -93,7 +104,7 @@ namespace {
         auto dataToSend = ByteArray({ 0x01, 0x02, 0x03, 0x04 });
         auto gotAck = node1_.serialFiller_.PublishWait("test-topic", dataToSend, std::chrono::milliseconds(1000));
         EXPECT_FALSE(gotAck);
-        EXPECT_EQ(dataToSend, savedData1);
+        EXPECT_EQ(dataToSend, savedData2);
     }
 
     TEST_F(TwoNodeAckTests, TwoWayTest) {
@@ -122,8 +133,8 @@ namespace {
 
         EXPECT_TRUE(node1GotAck);
         EXPECT_TRUE(node2GotAck);
-        EXPECT_EQ(node1DataToSend, savedData1);
-        EXPECT_EQ(node2DataToSend, savedData2);
+        EXPECT_EQ(node1DataToSend, savedData2);
+        EXPECT_EQ(node2DataToSend, savedData1);
     }
 
     TEST_F(TwoNodeAckTests, TwoPublishWaitCalls) {
@@ -172,6 +183,27 @@ namespace {
         EXPECT_TRUE(node1GotAck);
         EXPECT_EQ(ByteArray({ 0x02 }), savedData1);
         EXPECT_EQ(ByteArray({ 0x01 }), savedData2);
+    }
+
+    TEST_F(TwoNodeAckTests, MultiPacket)
+    {
+        auto topic = ByteArray();
+        auto data  = ByteArray();
+
+        // Subscribe to a test topic
+        node2_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray & data)>(dataStore2));
+
+        auto dataToSend = ByteArray({0x01, 0x02, 0x03, 0x04});
+
+        for (int i = 0; i < 512; ++i) {
+            // Call PublishWait
+            savedData2.clear();
+            auto gotAck = node1_.serialFiller_.PublishWait("test-topic", dataToSend, std::chrono::milliseconds(1000));
+
+            EXPECT_TRUE(gotAck);
+            EXPECT_EQ(dataToSend, savedData2);
+            EXPECT_EQ(0, node1_.serialFiller_.NumThreadsWaiting());
+        }
     }
 
 }  // namespace

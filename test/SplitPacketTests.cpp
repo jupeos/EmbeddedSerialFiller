@@ -11,7 +11,6 @@
 #include "gtest/gtest.h"
 #include "SerialFiller/SerialFiller.hpp"
 #include "SerialFiller/SerialFillerHelper.hpp"
-#include "SerialFiller/Exceptions/LengthOfTopicTooLong.hpp"
 
 using namespace mn::SerialFiller;
 
@@ -42,7 +41,7 @@ namespace {
         auto packet = ByteArray({ 0x01, 0x00, 0x01, 0x06, 0x02, 0x03 });
 		Topic topic;
         auto data = ByteArray();
-        EXPECT_THROW(SerialFillerHelper::SplitPacket(packet, 3, topic, data), LengthOfTopicTooLong);
+		EXPECT_EQ(SerialFillerHelper::SplitPacket(packet, 3, topic, data), StatusCode::ERROR_LENGTH_OF_TOPIC_TOO_LONG);
         EXPECT_EQ("", topic);
         EXPECT_TRUE(data.empty());
 

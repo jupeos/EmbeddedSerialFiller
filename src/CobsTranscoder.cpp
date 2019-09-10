@@ -40,9 +40,8 @@ void CobsTranscoder::Encode(const ByteArray& rawData, ByteArray& encodedData)
 
             // Reset count of num. elements in current block
             numElementsInCurrBlock = 0;
-        }
-        else {
-            encodedData.push_back(*((uint8_t*) it));
+        } else {
+            encodedData.push_back(*it);
             numElementsInCurrBlock++;
 
             if (numElementsInCurrBlock == 254) {
@@ -66,14 +65,14 @@ void CobsTranscoder::Encode(const ByteArray& rawData, ByteArray& encodedData)
     encodedData.push_back(0x00);
 }
 
-void CobsTranscoder::Decode(const ByteArray& encodedData, ByteArray& decodedData)
+StatusCode CobsTranscoder::Decode(const ByteArray& encodedData, ByteArray& decodedData)
 {
     decodedData.clear();
 
     size_t encodedDataPos = 0;
 
     while (encodedDataPos < encodedData.size()) {
-        int numElementsInBlock = (uint8_t) encodedData[encodedDataPos] - 1;
+        int numElementsInBlock = static_cast<uint8_t>(encodedData[encodedDataPos]) - 1;
         encodedDataPos++;
 
         // Copy across all bytes within block
@@ -81,10 +80,8 @@ void CobsTranscoder::Decode(const ByteArray& encodedData, ByteArray& decodedData
             uint8_t byteOfData = encodedData[encodedDataPos];
             if (byteOfData == 0x00) {
                 decodedData.clear();
-                //throw CobsDecodingFailed(encodedData);
-                std::cout << config_TERM_TEXT_COLOUR_RED << "COBS decoding failed for packet."
-                          << config_TERM_TEXT_FORMAT_NORMAL << std::endl;
-                return;
+                //std::cout << config_TERM_TEXT_COLOUR_RED << "COBS decoding failed for packet." << config_TERM_TEXT_FORMAT_NORMAL << std::endl;
+                return StatusCode::ERROR_ZERO_BYTE_NOT_EXPECTED;
             }
 
             decodedData.push_back(encodedData[encodedDataPos]);
@@ -105,6 +102,7 @@ void CobsTranscoder::Decode(const ByteArray& encodedData, ByteArray& decodedData
             decodedData.push_back(0x00);
         }
     }
+    return StatusCode::SUCCESS;
 }
 } // namespace SerialFiller
 } // namespace mn

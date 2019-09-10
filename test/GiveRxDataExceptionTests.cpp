@@ -4,7 +4,6 @@
 
 // User includes
 #include "SerialFiller/SerialFiller.hpp"
-#include "SerialFiller/Exceptions/CrcCheckFailed.hpp"
 
 using namespace mn::SerialFiller;
 
@@ -26,13 +25,13 @@ namespace {
     TEST_F(GiveRxDataExceptionTests, CrcCheckFailedTest) {
         // Data has a bad CRC!
         auto rxData = ByteQueue({ 0x05, 0x02, 0x03, 0x04, 0x05, 0x00 });
-        EXPECT_THROW(serialFiller.GiveRxData(rxData), CrcCheckFailed);
+        EXPECT_EQ(serialFiller.GiveRxData(rxData), StatusCode::ERROR_CRC_CHECK_FAILED);
         EXPECT_TRUE(rxData.empty());
     }
 
     TEST_F(GiveRxDataExceptionTests, NotEnoughBytesTest) {
         auto rxData = ByteQueue({ 0x01, 0x00 });
-        EXPECT_THROW(serialFiller.GiveRxData(rxData), std::runtime_error);
+        EXPECT_EQ(serialFiller.GiveRxData(rxData), StatusCode::ERROR_NOT_ENOUGH_BYTES);
         EXPECT_TRUE(rxData.empty());
     }
 

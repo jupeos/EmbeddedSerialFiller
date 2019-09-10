@@ -48,7 +48,6 @@ public:
     SerialFiller();
 
     /// \brief      Publishes data on a topic, and then immediately returns. Does not block (see PublishWait()).
-    /// \throws     std::runtime_error
     void Publish(const Topic& topic, const ByteArray& data);
 
     /// \brief      Publishes data on a topic, and then blocks the calling thread until either an acknowledge
@@ -64,8 +63,7 @@ public:
 
     /// \brief      Unsubscribes a subscriber using the provided ID.
     /// \details    ID is returned from #Subscribe() method.
-    /// \throws     SerialFillerException if subscriber ID is invalid.
-    void Unsubscribe(uint32_t subscriberId);
+    StatusCode Unsubscribe(uint32_t subscriberId);
 
     /// \brief      Unsubscribes all subscribers.
     void UnsubscribeAll();
@@ -74,11 +72,7 @@ public:
     /// \details    SerialFiller will add this data to it's internal RX data buffer, and then
     ///             attempt to find and extract valid packets. If SerialFiller finds valid packets,
     ///             it will then call all callbacks associated with that topic.
-    /// \throws     NotEnoughBytes
-    /// \throws     CobsDecodingFailed
-    /// \throws     CrcCheckFailed
-    /// \throws     NoTopicDataSeparator
-    void GiveRxData(ByteArray& rxData);
+    StatusCode GiveRxData(ByteArray& rxData);
 
     /// \brief      Use to enable/disable the sending to ACK (acknowledgement) packets when a publish packet
     ///             is received. Must be enabled if PublishWait() is going to be used.
@@ -107,7 +101,7 @@ private:
 
     struct Subscriber
     {
-        uint32_t                       id_;
+        uint32_t                        id_;
         etl::delegate<void(ByteArray&)> callback_;
     };
 
