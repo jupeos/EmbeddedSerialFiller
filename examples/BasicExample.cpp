@@ -1,22 +1,17 @@
-///
-/// \file 				BasicExample.cpp
-/// \author 			Geoffrey Hunter <gbmhunter@gmail.com> (www.mbedded.ninja)
-/// \edited             n/a
-/// \created			2017-06-20
-/// \last-modified		2017-08-23
-/// \brief 				Contains a simple SerialFiller example.
-/// \details
-///		See README.md in root dir for more info.
+/**
+ * \file    BasicExample.cpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
-// User includes
 #include "SerialFiller/SerialFiller.hpp"
 #include <vector>
 
-using namespace mn::SerialFiller;
+using namespace esf;
 
 int main() {
 #if 0
-    SerialFiller serialFiller;
+    EmbeddedSerialFiller serialFiller;
 
     // Connect the I/O together, to make
     // a software "loop-back"
@@ -38,5 +33,4 @@ int main() {
     serialFiller.Publish("mytopic", {0x01, 0x02, 0x03});
 #endif
     return 0;
-
 }

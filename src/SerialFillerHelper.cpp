@@ -1,22 +1,17 @@
-///
-/// \file 				SerialFillerHelper.cpp
-/// \author 			Geoffrey Hunter <gbmhunter@gmail.com> (www.mbedded.ninja)
-/// \edited             n/a
-/// \created			2017-06-10
-/// \last-modified		2018-01-30
-/// \brief 				Contains the SerialFillerHelper class.
-/// \details
-///		See README.rst in root dir for more info.
+/**
+ * \file    Utilities.hpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
 #include "SerialFiller/SerialFillerHelper.hpp"
 #include "SerialFiller/Logger.hpp"
 #include <etl/crc16_ccitt.h>
 #include <iostream>
 
-namespace mn {
-namespace SerialFiller {
+namespace esf {
 
-void SerialFillerHelper::MoveRxDataInBuffer(ByteArray& newRxData, ByteArray& rxDataBuffer, ByteArray& packet)
+void Utilities::MoveRxDataInBuffer(ByteArray& newRxData, ByteArray& rxDataBuffer, ByteArray& packet)
 {
     //            std::cout << "Move RX data called." << std::endl;
 
@@ -54,7 +49,7 @@ void SerialFillerHelper::MoveRxDataInBuffer(ByteArray& newRxData, ByteArray& rxD
     //            std::cout << "Move RX data returning." << std::endl;
 }
 
-void SerialFillerHelper::AddCrc(ByteArray& packet)
+void Utilities::AddCrc(ByteArray& packet)
 {
     uint16_t crcVal = etl::crc16_ccitt(packet.begin(), packet.end());
 
@@ -64,7 +59,7 @@ void SerialFillerHelper::AddCrc(ByteArray& packet)
     packet.push_back(static_cast<uint8_t>((crcVal >> 0) & 0xFF));
 }
 
-StatusCode SerialFillerHelper::VerifyCrc(const ByteArray& packet)
+StatusCode Utilities::VerifyCrc(const ByteArray& packet)
 {
     if (packet.size() < 3) {
         //LOG((*logger_), ERROR, "Cannot verify CRC with less than 3 bytes in packet.");
@@ -88,7 +83,7 @@ StatusCode SerialFillerHelper::VerifyCrc(const ByteArray& packet)
     return StatusCode::SUCCESS;
 }
 
-StatusCode SerialFillerHelper::SplitPacket(const ByteArray& packet, uint32_t startAt, Topic& topic, ByteArray& data)
+StatusCode Utilities::SplitPacket(const ByteArray& packet, uint32_t startAt, Topic& topic, ByteArray& data)
 {
     // Get length of topic
     size_t lengthOfTopic = packet.at(startAt);
@@ -104,5 +99,5 @@ StatusCode SerialFillerHelper::SplitPacket(const ByteArray& packet, uint32_t sta
     data = ByteArray(packet.begin() + 1 + startAt + lengthOfTopic, packet.end() - 2);
     return StatusCode::SUCCESS;
 }
-} // namespace SerialFiller
-} // namespace mn
+
+} // namespace esf

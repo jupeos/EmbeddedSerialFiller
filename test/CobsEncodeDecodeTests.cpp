@@ -1,9 +1,14 @@
-#include "gtest/gtest.h"
+/**
+ * \file    CobsEncodeDecodeTest.cpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
+#include "gtest/gtest.h"
 #include "SerialFiller/SerialFiller.hpp"
 #include "SerialFiller/CobsTranscoder.hpp"
 
-using namespace mn::SerialFiller;
+using namespace esf;
 
 namespace {
 

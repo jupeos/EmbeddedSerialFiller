@@ -1,28 +1,23 @@
-///
-/// \file 				SerialFiller.cpp
-/// \author 			Geoffrey Hunter <gbmhunter@gmail.com> (www.mbedded.ninja)
-/// \edited             n/a
-/// \created			2017-06-10
-/// \last-modified		2018-01-30
-/// \brief 				Contains the SerialFiller class.
-/// \details
-///		See README.md in root dir for more info.
+/**
+ * \file    EmbeddedSerialFiller.cpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
 #include "SerialFiller/SerialFiller.hpp"
 #include "SerialFiller/CobsTranscoder.hpp"
 #include "SerialFiller/SerialFillerHelper.hpp"
 
-namespace mn {
-namespace SerialFiller {
+namespace esf {
 
-SerialFiller::SerialFiller()
+EmbeddedSerialFiller::EmbeddedSerialFiller()
     : nextPacketId_(0)
     , ackEnabled_(false)
     , threadSafetyEnabled_(true)
     , nextFreeSubsriberId_(0)
 {}
 
-void SerialFiller::Publish(const Topic& topic, const ByteArray& data)
+void EmbeddedSerialFiller::Publish(const Topic& topic, const ByteArray& data)
 {
     std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
     if (threadSafetyEnabled_)
@@ -31,7 +26,7 @@ void SerialFiller::Publish(const Topic& topic, const ByteArray& data)
     PublishInternal(topic, data);
 }
 
-bool SerialFiller::PublishWait(const Topic& topic, const ByteArray& data, std::chrono::milliseconds timeout)
+bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data, std::chrono::milliseconds timeout)
 {
     LOG((*logger_), DEBUG, "PublishWait called. nextPacketId_=" + std::to_string(nextPacketId_));
 
@@ -76,7 +71,7 @@ bool SerialFiller::PublishWait(const Topic& topic, const ByteArray& data, std::c
     return gotAck;
 }
 
-uint32_t SerialFiller::Subscribe(const Topic& topic, etl::delegate<void(ByteArray&)> callback)
+uint32_t EmbeddedSerialFiller::Subscribe(const Topic& topic, etl::delegate<void(ByteArray&)> callback)
 {
     LOG((*logger_), DEBUG, std::string() + "Method called.");
     std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
@@ -96,7 +91,7 @@ uint32_t SerialFiller::Subscribe(const Topic& topic, etl::delegate<void(ByteArra
     return id;
 }
 
-StatusCode SerialFiller::Unsubscribe(uint32_t subscriberId)
+StatusCode EmbeddedSerialFiller::Unsubscribe(uint32_t subscriberId)
 {
     std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
     if (threadSafetyEnabled_)
@@ -115,7 +110,7 @@ StatusCode SerialFiller::Unsubscribe(uint32_t subscriberId)
     return StatusCode::ERROR_UNRECOGNISED_SUBSCRIBER;
 }
 
-void SerialFiller::UnsubscribeAll()
+void EmbeddedSerialFiller::UnsubscribeAll()
 {
     std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
     if (threadSafetyEnabled_)
@@ -124,7 +119,7 @@ void SerialFiller::UnsubscribeAll()
     subscribers_.clear();
 }
 
-StatusCode SerialFiller::GiveRxData(ByteArray& rxData)
+StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
 {
     StatusCode result = StatusCode::SUCCESS LOG((*logger_), DEBUG, std::string() + "Method called with rxData = " + mn::CppUtils::String::ToHex(rxData));
     std::unique_lock<std::mutex>            lock(classMutex_, std::defer_lock);
@@ -139,7 +134,7 @@ StatusCode SerialFiller::GiveRxData(ByteArray& rxData)
     LOG((*logger_), DEBUG, "Before extracting packets, rxData = " + CppUtils::String::ToHex(rxData));
 
     ByteArray packet;
-    SerialFillerHelper::MoveRxDataInBuffer(rxData, rxBuffer_, packet);
+    Utilities::MoveRxDataInBuffer(rxData, rxBuffer_, packet);
     while (!packet.empty()) {
         LOG((*logger_), DEBUG, "Found packet. Data (COBS encoded) = " + CppUtils::String::ToHex(packet));
         LOG((*logger_), DEBUG, "rxBuffer_ now = " + CppUtils::String::ToHex(rxBuffer_));
@@ -156,7 +151,7 @@ StatusCode SerialFiller::GiveRxData(ByteArray& rxData)
         result = CobsTranscoder::Decode(packet, decodedData);
         if (result == StatusCode::SUCCESS) {
             // Verify CRC
-            result = SerialFillerHelper::VerifyCrc(decodedData);
+            result = Utilities::VerifyCrc(decodedData);
             if (result == StatusCode::SUCCESS) {
                 // Look at packet type
                 auto packetType = static_cast<PacketType>(decodedData[0]);
@@ -165,7 +160,7 @@ StatusCode SerialFiller::GiveRxData(ByteArray& rxData)
                 if (packetType == PacketType::PUBLISH) {
                     LOG((*logger_), DEBUG, "Received PUBLISH packet. [1]=" + std::to_string(decodedData.at(1)));
                     // 4. Then split packet into topic and data
-                    result = SerialFillerHelper::SplitPacket(decodedData, 2, topic, data);
+                    result = Utilities::SplitPacket(decodedData, 2, topic, data);
                     if (result == StatusCode::SUCCESS) {
                         // WARNING: Make sure to send ack BEFORE invoking topic callbacks, as they may cause other messages
                         // to be sent, and we always want the ACK to be the first thing sent back to the sender.
@@ -204,7 +199,7 @@ StatusCode SerialFiller::GiveRxData(ByteArray& rxData)
                 } else if (packetType == PacketType::ACK) {
                     LOG((*logger_), DEBUG, "Received ACK packet.");
                     if (!ackEnabled_) {
-                        LOG((*logger_), ERROR, "SerialFiller node received ACK packet but auto-ACK was not enabled.");
+                        LOG((*logger_), ERROR, "EmbeddedSerialFiller node received ACK packet but auto-ACK was not enabled.");
                         return StatusCode::ERROR_AUTO_ACK_DISABLED;
                     }
 
@@ -221,7 +216,7 @@ StatusCode SerialFiller::GiveRxData(ByteArray& rxData)
                     return StatusCode::ERROR_UNRECOGNISED_PACKET_TYPE;
                 }
 
-                SerialFillerHelper::MoveRxDataInBuffer(rxData, rxBuffer_, packet);
+                Utilities::MoveRxDataInBuffer(rxData, rxBuffer_, packet);
             } else {
                 break;
             }
@@ -233,12 +228,12 @@ StatusCode SerialFiller::GiveRxData(ByteArray& rxData)
     return result;
 }
 
-void SerialFiller::SetAckEnabled(bool value)
+void EmbeddedSerialFiller::SetAckEnabled(bool value)
 {
     ackEnabled_ = value;
 }
 
-void SerialFiller::SendAck(uint8_t packetId)
+void EmbeddedSerialFiller::SendAck(uint8_t packetId)
 {
     LOG((*logger_), DEBUG, "SendAck called with packetId = " + std::to_string(packetId));
 
@@ -251,7 +246,7 @@ void SerialFiller::SendAck(uint8_t packetId)
     packet.push_back(packetId);
 
     // Add CRC
-    SerialFillerHelper::AddCrc(packet);
+    Utilities::AddCrc(packet);
 
     // Encode data using COBS
     ByteArray encodedData;
@@ -269,7 +264,7 @@ void SerialFiller::SendAck(uint8_t packetId)
     //            std::cout << "SendAck() finished." << std::endl;
 }
 
-uint32_t SerialFiller::NumThreadsWaiting()
+uint32_t EmbeddedSerialFiller::NumThreadsWaiting()
 {
     std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
     if (threadSafetyEnabled_)
@@ -278,7 +273,7 @@ uint32_t SerialFiller::NumThreadsWaiting()
     return static_cast<uint32_t>(ackEvents_.size());
 }
 
-void SerialFiller::PublishInternal(const Topic& topic, const ByteArray& data)
+void EmbeddedSerialFiller::PublishInternal(const Topic& topic, const ByteArray& data)
 {
     ByteArray packet;
 
@@ -296,7 +291,7 @@ void SerialFiller::PublishInternal(const Topic& topic, const ByteArray& data)
     std::copy(data.begin(), data.end(), std::back_inserter(packet));
 
     // Add CRC
-    SerialFillerHelper::AddCrc(packet);
+    Utilities::AddCrc(packet);
 
     // Encode data using COBS
     ByteArray encodedData;
@@ -316,10 +311,9 @@ void SerialFiller::PublishInternal(const Topic& topic, const ByteArray& data)
     nextPacketId_ += 1;
 }
 
-void SerialFiller::SetThreadSafetyEnabled(bool value)
+void EmbeddedSerialFiller::SetThreadSafetyEnabled(bool value)
 {
     threadSafetyEnabled_ = value;
 }
 
-} // namespace SerialFiller
-} // namespace mn
+} // namespace esf

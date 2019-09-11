@@ -1,20 +1,15 @@
-///
-/// \file 				CobsTranscoder.hpp
-/// \author 			Geoffrey Hunter <gbmhunter@gmail.com> (www.mbedded.ninja)
-/// \edited             n/a
-/// \created			2017-06-20
-/// \last-modified		2018-01-25
-/// \brief 				Contains the CobsTranscoder class.
-/// \details
-///		See README.rst in root dir for more info.
+/**
+ * \file    CobsTranscoder.hpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
-#ifndef MN_SERIAL_FILLER_COBS_TRANSCODER_H_
-#define MN_SERIAL_FILLER_COBS_TRANSCODER_H_
+#ifndef ESF_SERIAL_FILLER_COBS_TRANSCODER_H_
+#define ESF_SERIAL_FILLER_COBS_TRANSCODER_H_
 
 #include "SerialFiller/Definitions.hpp"
 
-namespace mn {
-namespace SerialFiller {
+namespace esf {
 
 class CobsTranscoder
 {
@@ -28,7 +23,7 @@ public:
     ///             #decodedData is emptied of any pre-existing data. If the decode fails, decodedData is left empty.
     static StatusCode Decode(const ByteArray& encodedData, ByteArray& decodedData);
 };
-} // namespace SerialFiller
-} // namespace mn
 
-#endif // #ifndef MN_SERIAL_FILLER_COBS_TRANSCODER_H_
+} // namespace esf
+
+#endif // #ifndef ESF_SERIAL_FILLER_COBS_TRANSCODER_H_

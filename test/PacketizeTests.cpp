@@ -1,19 +1,14 @@
-///
-/// \file 				PacketizeTests.cpp
-/// \author 			Geoffrey Hunter <gbmhunter@gmail.com> (www.mbedded.ninja)
-/// \edited             n/a
-/// \created			2017-06-10
-/// \last-modified		2018-01-30
-/// \brief 				Contains the unit tests for the SerialFillerHelper class.
-/// \details
-///		See README.md in root dir for more info.
+/**
+ * \file    PacketizeTest.cpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
-// 3rd party includes
 #include "gtest/gtest.h"
 #include "SerialFiller/SerialFiller.hpp"
 #include "SerialFiller/SerialFillerHelper.hpp"
 
-using namespace mn::SerialFiller;
+using namespace esf;
 
 namespace {
 
@@ -35,7 +30,7 @@ namespace {
         std::vector<ByteArray> packets;
         ByteArray packet;
 
-        while(SerialFillerHelper::MoveRxDataInBuffer(newRxData, existingRxData, packet), !packet.empty()) {
+        while(Utilities::MoveRxDataInBuffer(newRxData, existingRxData, packet), !packet.empty()) {
             packets.push_back(packet);
         }
 
@@ -51,7 +46,7 @@ namespace {
         std::vector<ByteArray> packets;
         ByteArray packet;
 
-        while(SerialFillerHelper::MoveRxDataInBuffer(newRxData, existingRxData, packet), !packet.empty()) {
+        while(Utilities::MoveRxDataInBuffer(newRxData, existingRxData, packet), !packet.empty()) {
             packets.push_back(packet);
         }
 
@@ -66,7 +61,7 @@ namespace {
         auto existingRxData = ByteQueue();
         std::vector<ByteArray> packets;
         ByteArray packet;
-        while(SerialFillerHelper::MoveRxDataInBuffer(newRxData, existingRxData, packet), !packet.empty()) {
+        while(Utilities::MoveRxDataInBuffer(newRxData, existingRxData, packet), !packet.empty()) {
             packets.push_back(packet);
         }
 
@@ -80,7 +75,7 @@ namespace {
         std::vector<ByteArray> packets;
         ByteArray packet;
 
-        while(SerialFillerHelper::MoveRxDataInBuffer(newRxData, existingRxData, packet), !packet.empty()) {
+        while(Utilities::MoveRxDataInBuffer(newRxData, existingRxData, packet), !packet.empty()) {
             packets.push_back(packet);
         }
 
@@ -90,7 +85,7 @@ namespace {
         // Now add a EOF byte + start of next packet (which should complete the
         // packet partially received above)
         newRxData = ByteQueue({0x00, 0xAA, 0xAB});
-        while(SerialFillerHelper::MoveRxDataInBuffer(newRxData, existingRxData, packet), !packet.empty()) {
+        while(Utilities::MoveRxDataInBuffer(newRxData, existingRxData, packet), !packet.empty()) {
             packets.push_back(packet);
         }
 
@@ -99,7 +94,7 @@ namespace {
         EXPECT_EQ(ByteQueue({ 0xAA, 0xAB }), existingRxData);
 
         newRxData = ByteQueue({0x00});
-        while(SerialFillerHelper::MoveRxDataInBuffer(newRxData, existingRxData, packet), !packet.empty()) {
+        while(Utilities::MoveRxDataInBuffer(newRxData, existingRxData, packet), !packet.empty()) {
             packets.push_back(packet);
         }
 

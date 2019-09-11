@@ -1,8 +1,13 @@
-#include "gtest/gtest.h"
+/**
+ * \file    CallbackTests.cpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
+#include "gtest/gtest.h"
 #include "SerialFiller/SerialFiller.hpp"
 
-using namespace mn::SerialFiller;
+using namespace esf;
 
 namespace {
 
@@ -19,7 +24,7 @@ namespace {
     TEST_F(CallbackTests, CallbackTest1) {
 
 
-        SerialFiller serialFiller;
+        EmbeddedSerialFiller serialFiller;
 
         ByteQueue savedTxData;
         serialFiller.txDataReady_ = ([&](ByteQueue txData) -> void {

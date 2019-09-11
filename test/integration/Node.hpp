@@ -1,42 +1,32 @@
-///
-/// \file 				Node.hpp
-/// \author 			Geoffrey Hunter <gbmhunter@gmail.com> (www.mbedded.ninja)
-/// \edited             n/a
-/// \created			2017-09-21
-/// \last-modified		2017-09-21
-/// \brief 				Contains the Node class.
-/// \details
-///		See README.md in root dir for more info.
+/**
+ * \file    Node.hpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
-#ifndef MN_SERIAL_FILLER_NODE_H_
-#define MN_SERIAL_FILLER_NODE_H_
+#ifndef ESF_SERIAL_FILLER_NODE_H_
+#define ESF_SERIAL_FILLER_NODE_H_
 
-// System includes
 #include <atomic>
 #include <string>
 #include <iostream>
 #include <functional>
 #include <thread>
-
 #include "SerialFiller/SerialFiller.hpp"
-
 #include "ThreadSafeQ.hpp"
 
-using namespace mn::SerialFiller;
-
-namespace mn {
-    namespace SerialFiller {
+namespace esf {
 
         class Node {
 
         public:
 
             std::shared_ptr<Logger> logger_;
-            SerialFiller serialFiller_;
-            mn::CppUtils::ThreadSafeQ<uint8_t> rxQueue_;
+            EmbeddedSerialFiller serialFiller_;
+            CppUtils::ThreadSafeQ<uint8_t> rxQueue_;
 
             Node(std::string name) :
-                    logger_(new Logger("SerialFiller", Logger::Severity::NONE, Logger::Color::CYAN, [](std::string msg) { std::cout << msg << std::endl; })),
+                    logger_(new Logger("EmbeddedSerialFiller", Logger::Severity::NONE, Logger::Color::CYAN, [](std::string msg) { std::cout << msg << std::endl; })),
                     name_(name),
                     breakThread_(false) {
                 rxThread_ = std::thread(&Node::RxThreadFn, this);
@@ -80,7 +70,6 @@ namespace mn {
             std::thread rxThread_;
             std::atomic<bool> breakThread_;
         };
-    } // namespace SerialFiller
-} // namespace mn
+} // namespace esf
 
-#endif // #ifndef MN_SERIAL_FILLER_NODE_H_
+#endif // #ifndef ESF_SERIAL_FILLER_NODE_H_

@@ -1,20 +1,14 @@
-///
-/// \file 				CobsTranscoder.hpp
-/// \author 			Geoffrey Hunter <gbmhunter@gmail.com> (www.mbedded.ninja)
-/// \edited             n/a
-/// \created			2017-06-10
-/// \last-modified		2017-09-22
-/// \brief 				Contains the CobsTranscoder class.
-/// \details
-///		See README.rst in root dir for more info.
+/**
+ * \file    CobsTranscoder.cpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
-// User includes
 #include "SerialFiller/CobsTranscoder.hpp"
 #include "SerialFiller/Logger.hpp"
 #include <iostream>
 
-namespace mn {
-namespace SerialFiller {
+namespace esf {
 
 void CobsTranscoder::Encode(const ByteArray& rawData, ByteArray& encodedData)
 {
@@ -104,5 +98,5 @@ StatusCode CobsTranscoder::Decode(const ByteArray& encodedData, ByteArray& decod
     }
     return StatusCode::SUCCESS;
 }
-} // namespace SerialFiller
-} // namespace mn
+
+} // namespace esf

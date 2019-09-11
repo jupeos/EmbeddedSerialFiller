@@ -1,22 +1,17 @@
-///
-/// \file 				Logger.hpp
-/// \author 			Geoffrey Hunter (www.mbedded.ninja) <gbmhunter@gmail.com>
-/// \edited             n/a
-/// \created			2017-08-15
-/// \last-modified		2017-09-27
-/// \brief 				Contains the Logging class.
-/// \details
-///		See README.md in root dir for more info.
+/**
+ * \file    Logger.hpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
-#ifndef MN_SERIAL_FILLER_LOGGER_H_
-#define MN_SERIAL_FILLER_LOGGER_H_
+#ifndef ESF_SERIAL_FILLER_LOGGER_H_
+#define ESF_SERIAL_FILLER_LOGGER_H_
 
 #include <functional>
 #include <memory>
 #include <string>
 
-namespace mn {
-namespace SerialFiller {
+namespace esf {
 
 #if defined(ENABLE_LOGGING)
 #define LOG(logger, severity, msg) \
@@ -165,7 +160,6 @@ private:
     }
 };
 
-} // namespace SerialFiller
-} // namespace mn
+} // namespace esf
 
-#endif // #ifndef MN_SERIAL_FILLER_LOGGER_H_
+#endif // #ifndef ESF_SERIAL_FILLER_LOGGER_H_

@@ -1,18 +1,13 @@
-///
-/// \file 				LoopBackTests.hpp
-/// \author 			Geoffrey Hunter <gbmhunter@gmail.com> (www.mbedded.ninja)
-/// \edited             n/a
-/// \created			2017-06-23
-/// \last-modified		2018-01-30
-/// \brief 				Contains loop-back unit tests for the SerialFiller class.
-/// \details
-///		See README.md in root dir for more info.
+/**
+ * \file    LoopBackTests.cpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
 #include "gtest/gtest.h"
-
 #include "SerialFiller/SerialFiller.hpp"
 
-using namespace mn::SerialFiller;
+using namespace esf;
 
 namespace {
 static ByteArray savedData1;
@@ -36,7 +31,7 @@ public:
     }
 
 protected:
-    SerialFiller serialFiller;
+    EmbeddedSerialFiller serialFiller;
     bool         noSubscribersForTopicEventFired;
     Topic        savedNoSubscriberTopic;
     ByteArray    savedNoSubscriberData;

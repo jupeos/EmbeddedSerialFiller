@@ -1,23 +1,18 @@
-///
-/// \file 				SerialFillerHelper.hpp
-/// \author 			Geoffrey Hunter <gbmhunter@gmail.com> (www.mbedded.ninja)
-/// \edited             n/a
-/// \created			2017-06-10
-/// \last-modified		2018-01-30
-/// \brief 				Contains the SerialFillerHelper class.
-/// \details
-///		See README.rst in root dir for more info.
+/**
+ * \file    Utilities.cpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
-#ifndef MN_SERIAL_FILLER_SERIAL_FILLER_HELPER_H_
-#define MN_SERIAL_FILLER_SERIAL_FILLER_HELPER_H_
+#ifndef ESF_SERIAL_FILLER_SERIAL_FILLER_HELPER_H_
+#define ESF_SERIAL_FILLER_SERIAL_FILLER_HELPER_H_
 
 #include "SerialFiller/Definitions.hpp"
 #include <cstdint>
 
-namespace mn {
-namespace SerialFiller {
+namespace esf {
 
-class SerialFillerHelper
+class Utilities
 {
 public:
     static StatusCode SplitPacket(const ByteArray& packet, uint32_t startAt, Topic& topic, ByteArray& data);
@@ -35,7 +30,7 @@ public:
 
 private:
 };
-} // namespace SerialFiller
-} // namespace mn
 
-#endif // #ifndef MN_SERIAL_FILLER_SERIAL_FILLER_HELPER_H_
+} // namespace esf
+
+#endif // #ifndef ESF_SERIAL_FILLER_SERIAL_FILLER_HELPER_H_

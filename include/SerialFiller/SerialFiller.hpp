@@ -1,15 +1,11 @@
-///
-/// \file 				SerialFiller.hpp
-/// \author 			Geoffrey Hunter <gbmhunter@gmail.com> (www.mbedded.ninja)
-/// \edited             n/a
-/// \created			2017-06-10
-/// \last-modified		2018-01-30
-/// \brief 				Contains the SerialFiller class.
-/// \details
-///		See README.md in root dir for more info.
+/**
+ * \file    EmbeddedSerialFiller.hpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
-#ifndef MN_SERIAL_FILLER_SERIAL_FILLER_H_
-#define MN_SERIAL_FILLER_SERIAL_FILLER_H_
+#ifndef ESF_SERIAL_FILLER_SERIAL_FILLER_H_
+#define ESF_SERIAL_FILLER_SERIAL_FILLER_H_
 
 #include "SerialFiller/Definitions.hpp"
 #include "SerialFiller/Logger.hpp"
@@ -21,12 +17,11 @@
 #include <etl/multimap.h>
 #include <iostream>
 
-namespace mn {
-namespace SerialFiller {
+namespace esf {
 
 using EventType = std::pair<std::condition_variable, bool>;
 
-/// \brief      This SerialFiller class represents a single serial node.
+/// \brief      This EmbeddedSerialFiller class represents a single serial node.
 /// \details
 /// PACKET STRUCTURE:
 /// Format, pre COBS encoded:
@@ -38,14 +33,14 @@ using EventType = std::pair<std::condition_variable, bool>;
 /// [ 0x02, <packet ID>, <CRC MSB>, <CRC LSB> ]
 /// This is then COBS encoded, which frames the end-of-packet with a unique 0x00 byte,
 /// and escapes all pre-existing 0x00's present in packet.
-class SerialFiller
+class EmbeddedSerialFiller
 {
 public:
-    /// \brief      Enumerates the available SerialFiller packet types.
+    /// \brief      Enumerates the available EmbeddedSerialFiller packet types.
     enum class PacketType : uint8_t { PUBLISH = 0x01, ACK = 0x02 };
 
     /// \brief      Basic constructor.
-    SerialFiller();
+    EmbeddedSerialFiller();
 
     /// \brief      Publishes data on a topic, and then immediately returns. Does not block (see PublishWait()).
     void Publish(const Topic& topic, const ByteArray& data);
@@ -68,9 +63,9 @@ public:
     /// \brief      Unsubscribes all subscribers.
     void UnsubscribeAll();
 
-    /// \brief      Pass in received RX data to SerialFiller.
-    /// \details    SerialFiller will add this data to it's internal RX data buffer, and then
-    ///             attempt to find and extract valid packets. If SerialFiller finds valid packets,
+    /// \brief      Pass in received RX data to EmbeddedSerialFiller.
+    /// \details    EmbeddedSerialFiller will add this data to it's internal RX data buffer, and then
+    ///             attempt to find and extract valid packets. If EmbeddedSerialFiller finds valid packets,
     ///             it will then call all callbacks associated with that topic.
     StatusCode GiveRxData(ByteArray& rxData);
 
@@ -78,7 +73,7 @@ public:
     ///             is received. Must be enabled if PublishWait() is going to be used.
     void SetAckEnabled(bool value);
 
-    /// \brief      Use to enable/disable thread safety (enabled by default). Enabling thread safety makes all SerialFiller API
+    /// \brief      Use to enable/disable thread safety (enabled by default). Enabling thread safety makes all EmbeddedSerialFiller API
     ///             methods take out a lock on enter, and release on exit. PublishWait() releases lock when it blocks (so
     ///             PublishWait() can be called multiple times from different threads).
     void SetThreadSafetyEnabled(bool value);
@@ -86,7 +81,7 @@ public:
     /// \brief      Call to find out how many threads are currently waiting on ACKs for this node.
     uint32_t NumThreadsWaiting();
 
-    /// \brief      This is called by SerialFiller whenever it has data that is ready
+    /// \brief      This is called by EmbeddedSerialFiller whenever it has data that is ready
     ///             to be sent out of the serial port.
     etl::delegate<void(const ByteArray&)> txDataReady_;
 
@@ -115,7 +110,7 @@ private:
     /// \brief      Is true if acknowledge (ACK) functionality is enabled.
     bool ackEnabled_;
 
-    /// \brief      Mutex that provides thread safety for the SerialFiller class.
+    /// \brief      Mutex that provides thread safety for the EmbeddedSerialFiller class.
     /// \details    Only used if thread safety is enabled via SetThreadSafetyEnabled().
     std::mutex classMutex_;
 
@@ -132,7 +127,7 @@ private:
     /// \brief      Sends an ACK packet.
     void SendAck(uint8_t packetId);
 };
-} // namespace SerialFiller
-} // namespace mn
 
-#endif // #ifndef MN_SERIAL_FILLER_SERIAL_FILLER_H_
+} // namespace esf
+
+#endif // #ifndef ESF_SERIAL_FILLER_SERIAL_FILLER_H_

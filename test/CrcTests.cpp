@@ -1,10 +1,15 @@
-#include "gtest/gtest.h"
+/**
+ * \file    CrcTests.cpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
+#include "gtest/gtest.h"
 #include <etl/crc16_ccitt.h>
 #include "SerialFiller/SerialFiller.hpp"
 #include "SerialFiller/SerialFillerHelper.hpp"
 
-using namespace mn::SerialFiller;
+using namespace esf;
 
 namespace {
 

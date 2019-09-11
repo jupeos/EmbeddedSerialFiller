@@ -1,8 +1,13 @@
-#include "gtest/gtest.h"
+/**
+ * \file    NoSubscribersTests.cpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
+#include "gtest/gtest.h"
 #include "SerialFiller/SerialFiller.hpp"
 
-using namespace mn::SerialFiller;
+using namespace esf;
 
 namespace {
 
@@ -11,7 +16,7 @@ namespace {
     class NoSubscribersTests : public ::testing::Test {
     protected:
 
-        SerialFiller serialFiller;
+        EmbeddedSerialFiller serialFiller;
 
         NoSubscribersTests() {
 

@@ -1,23 +1,16 @@
-///
-/// \file 				TwoNodeTests.hpp
-/// \author 			Geoffrey Hunter <gbmhunter@gmail.com> (www.mbedded.ninja)
-/// \edited             n/a
-/// \created			2017-09-21
-/// \last-modified		2017-09-21
-/// \brief 				Contains tests for the SerialFiller class that involve two SerialFiller nodes.
-/// \details
-///		See README.md in root dir for more info.
+/**
+ * \file    TwoNodeAckTests.cpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
 #include <thread>
-
 #include "gtest/gtest.h"
-
 #include "SerialFiller/SerialFiller.hpp"
-
 #include "ThreadSafeQ.hpp"
 #include "Node.hpp"
 
-using namespace mn::SerialFiller;
+using namespace esf;
 
 namespace {
 	static ByteArray savedData1;
@@ -25,7 +18,7 @@ namespace {
 		savedData1 = data;
 	};
 	static ByteArray savedData2;
-	auto dataStore2 = [](ByteArray& data) { 
+	auto dataStore2 = [](ByteArray& data) {
 		savedData2 = data;
 	};
 

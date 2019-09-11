@@ -6,3 +6,7 @@ build/
 
 # Standard CLion build directory
 cmake-build-debug/
+
+# Qt project files
+*.pro
+*.user

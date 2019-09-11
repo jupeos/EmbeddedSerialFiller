@@ -1,18 +1,14 @@
-///
-/// \file 				SplitPacketTests.cpp
-/// \author 			Geoffrey Hunter <gbmhunter@gmail.com> (www.mbedded.ninja)
-/// \edited             n/a
-/// \created			2017-06-10
-/// \last-modified		2018-01-30
-/// \brief 				Contains the unit tests for splitting packets.
-/// \details
-///		See README.md in root dir for more info.
+/**
+ * \file    SplitPacketTests.cpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
 #include "gtest/gtest.h"
 #include "SerialFiller/SerialFiller.hpp"
 #include "SerialFiller/SerialFillerHelper.hpp"
 
-using namespace mn::SerialFiller;
+using namespace esf;
 
 namespace {
 
@@ -32,7 +28,7 @@ namespace {
         auto packet = ByteArray({ 0x01, 0x00, 0x01, 0x04, 't', 'e', 's', 't', 'h', 'e', 'l', 'l', 'o', 0x01, 0x01 });
         Topic topic;
         auto data = ByteArray();
-        SerialFillerHelper::SplitPacket(packet, 3, topic, data);
+        Utilities::SplitPacket(packet, 3, topic, data);
         EXPECT_EQ("test", topic);
         EXPECT_EQ(ByteArray({'h', 'e', 'l', 'l', 'o'}), data);
     }
@@ -41,7 +37,7 @@ namespace {
         auto packet = ByteArray({ 0x01, 0x00, 0x01, 0x06, 0x02, 0x03 });
 		Topic topic;
         auto data = ByteArray();
-		EXPECT_EQ(SerialFillerHelper::SplitPacket(packet, 3, topic, data), StatusCode::ERROR_LENGTH_OF_TOPIC_TOO_LONG);
+		EXPECT_EQ(Utilities::SplitPacket(packet, 3, topic, data), StatusCode::ERROR_LENGTH_OF_TOPIC_TOO_LONG);
         EXPECT_EQ("", topic);
         EXPECT_TRUE(data.empty());
 

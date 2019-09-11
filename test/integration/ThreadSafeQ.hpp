@@ -1,24 +1,18 @@
-///
-/// \file 				ThreadSafeQ.hpp
-/// \author 			Geoffrey Hunter (www.mbedded.ninja) <gbmhunter@gmail.com>
-/// \edited             n/a
-/// \created			2017-08-09
-/// \last-modified		2017-08-14
-/// \brief 				Contains the ThreadSafeQ class.
-/// \details
-///		See README.md in root dir for more info.
+/**
+ * \file    ThreadSafeQ.hpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
-#ifndef MN_CPP_UTILS_THREAD_SAFE_Q_H_
-#define MN_CPP_UTILS_THREAD_SAFE_Q_H_
+#ifndef ESF_CPP_UTILS_THREAD_SAFE_Q_H_
+#define ESF_CPP_UTILS_THREAD_SAFE_Q_H_
 
-// System includes
 #include <queue>
 #include <mutex>
 #include <condition_variable>
 
+namespace esf {
 
-
-namespace mn {
     namespace CppUtils {
 
         /// \brief       A thread-safe queue designed for inter-thread communication.
@@ -97,7 +91,8 @@ namespace mn {
             std::condition_variable conditionVariable_;
 
         };
-    } // namespace CppUtils
-} // namespace mn
 
-#endif // #ifndef MN_CPP_UTILS_THREAD_SAFE_Q_H_
+    } // namespace CppUtils
+} // namespace esf
+
+#endif // #ifndef ESF_CPP_UTILS_THREAD_SAFE_Q_H_

@@ -1,18 +1,20 @@
+/**
+ * \file    GiveRxDataExceptionTests.cpp
+ * \author  Julian Mitchell
+ * \date    11 Sep 2019
+ */
 
-// 3rd party includes
 #include "gtest/gtest.h"
-
-// User includes
 #include "SerialFiller/SerialFiller.hpp"
 
-using namespace mn::SerialFiller;
+using namespace esf;
 
 namespace {
 
     class GiveRxDataExceptionTests : public ::testing::Test {
     protected:
 
-        SerialFiller serialFiller;
+        EmbeddedSerialFiller serialFiller;
 
         GiveRxDataExceptionTests() {
 
