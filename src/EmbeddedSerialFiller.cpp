@@ -4,9 +4,9 @@
  * \date    11 Sep 2019
  */
 
-#include "SerialFiller/SerialFiller.hpp"
-#include "SerialFiller/CobsTranscoder.hpp"
-#include "SerialFiller/SerialFillerHelper.hpp"
+#include "SerialFiller/EmbeddedSerialFiller.h"
+#include "SerialFiller/CobsTranscoder.h"
+#include "SerialFiller/SerialFillerHelper.h"
 
 namespace esf {
 
