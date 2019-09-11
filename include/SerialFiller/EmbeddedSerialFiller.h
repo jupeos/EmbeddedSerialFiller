@@ -1,11 +1,11 @@
 /**
- * \file    EmbeddedSerialFiller.hpp
+ * \file    EmbeddedSerialFiller.h
  * \author  Julian Mitchell
  * \date    11 Sep 2019
  */
 
-#ifndef ESF_SERIAL_FILLER_SERIAL_FILLER_H_
-#define ESF_SERIAL_FILLER_SERIAL_FILLER_H_
+#ifndef ESF_EMBEDDED_SERIAL_FILLER_H
+#define ESF_EMBEDDED_SERIAL_FILLER_H
 
 #include "SerialFiller/Definitions.hpp"
 #include "SerialFiller/Logger.hpp"
@@ -130,4 +130,4 @@ private:
 
 } // namespace esf
 
-#endif // #ifndef ESF_SERIAL_FILLER_SERIAL_FILLER_H_
+#endif // #ifndef ESF_EMBEDDED_SERIAL_FILLER_H
