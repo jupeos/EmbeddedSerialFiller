@@ -5,8 +5,8 @@
  */
 
 #include "gtest/gtest.h"
-#include "SerialFiller/SerialFiller.hpp"
-#include "SerialFiller/CobsTranscoder.hpp"
+#include "EmbeddedSerialFiller/EmbeddedSerialFiller.h"
+#include "EmbeddedSerialFiller/CobsTranscoder.h"
 
 using namespace esf;
 

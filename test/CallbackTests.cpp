@@ -5,7 +5,7 @@
  */
 
 #include "gtest/gtest.h"
-#include "SerialFiller/SerialFiller.hpp"
+#include "EmbeddedSerialFiller/EmbeddedSerialFiller.h"
 
 using namespace esf;
 
@@ -24,14 +24,14 @@ namespace {
     TEST_F(CallbackTests, CallbackTest1) {
 
 
-        EmbeddedSerialFiller serialFiller;
+        EmbeddedSerialFiller embeddedSF;
 
         ByteQueue savedTxData;
-        serialFiller.txDataReady_ = ([&](ByteQueue txData) -> void {
+        embeddedSF.txDataReady_ = ([&](ByteQueue txData) -> void {
             savedTxData = txData;
         });
 
-        serialFiller.Publish("test-topic", ByteArray({ 'h', 'e', 'l', 'l', 'o' }));
+        embeddedSF.Publish("test-topic", ByteArray({ 'h', 'e', 'l', 'l', 'o' }));
 
         EXPECT_NE(0, savedTxData.size());
     }

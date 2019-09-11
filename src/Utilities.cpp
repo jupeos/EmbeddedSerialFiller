@@ -4,8 +4,8 @@
  * \date    11 Sep 2019
  */
 
-#include "SerialFiller/Utilities.h"
-#include "SerialFiller/Logger.h"
+#include "EmbeddedSerialFiller/Utilities.h"
+#include "EmbeddedSerialFiller/Logger.h"
 #include <etl/crc16_ccitt.h>
 #include <iostream>
 

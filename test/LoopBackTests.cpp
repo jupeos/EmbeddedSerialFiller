@@ -5,7 +5,7 @@
  */
 
 #include "gtest/gtest.h"
-#include "SerialFiller/SerialFiller.hpp"
+#include "EmbeddedSerialFiller/EmbeddedSerialFiller.h"
 
 using namespace esf;
 
@@ -31,7 +31,7 @@ public:
     }
 
 protected:
-    EmbeddedSerialFiller serialFiller;
+    EmbeddedSerialFiller embeddedSF;
     bool         noSubscribersForTopicEventFired;
     Topic        savedNoSubscriberTopic;
     ByteArray    savedNoSubscriberData;
@@ -39,11 +39,11 @@ protected:
     LoopBackTests()
     {
         // Connect output to input (software loopback)
-        serialFiller.txDataReady_ = etl::delegate<void(const ByteQueue&)>::create<LoopBackTests, &LoopBackTests::loopbackHandler>(*this);
-        serialFiller.SetThreadSafetyEnabled(false);
+        embeddedSF.txDataReady_ = etl::delegate<void(const ByteQueue&)>::create<LoopBackTests, &LoopBackTests::loopbackHandler>(*this);
+        embeddedSF.SetThreadSafetyEnabled(false);
     }
 
-    void loopbackHandler(const ByteQueue& data) { serialFiller.GiveRxData(const_cast<ByteQueue&>(data)); }
+    void loopbackHandler(const ByteQueue& data) { embeddedSF.GiveRxData(const_cast<ByteQueue&>(data)); }
 
     virtual ~LoopBackTests() {}
 };
@@ -54,10 +54,10 @@ TEST_F(LoopBackTests, SingleTopicTest)
     auto  data = ByteArray();
 
     // Subscribe to a test topic
-    serialFiller.Subscribe("test-topic", etl::delegate<void(ByteArray & data)>(dataStore1));
+    embeddedSF.Subscribe("test-topic", etl::delegate<void(ByteArray & data)>(dataStore1));
 
     // Publish data on topic
-    serialFiller.Publish("test-topic", {'h', 'e', 'l', 'l', 'o'});
+    embeddedSF.Publish("test-topic", {'h', 'e', 'l', 'l', 'o'});
 
     EXPECT_EQ(ByteArray({'h', 'e', 'l', 'l', 'o'}), savedData1);
 }
@@ -68,10 +68,10 @@ TEST_F(LoopBackTests, DataWithZerosTest)
     auto  data = ByteArray();
 
     // Subscribe to a test topic
-    serialFiller.Subscribe("test-topic", etl::delegate<void(ByteArray & data)>(dataStore1));
+    embeddedSF.Subscribe("test-topic", etl::delegate<void(ByteArray & data)>(dataStore1));
 
     // Publish data on topic
-    serialFiller.Publish("test-topic", ByteArray({'\x00', '\x00'}));
+    embeddedSF.Publish("test-topic", ByteArray({'\x00', '\x00'}));
 
     EXPECT_EQ(ByteArray({'\x00', '\x00'}), savedData1);
 }
@@ -82,20 +82,20 @@ TEST_F(LoopBackTests, MultiTopicTest)
     auto  data = ByteArray();
 
     // Subscribe to some topics (sharing the data object)
-    serialFiller.Subscribe("topic1", etl::delegate<void(ByteArray & data)>(dataStore1));
-    serialFiller.Subscribe("topic2", etl::delegate<void(ByteArray & data)>(dataStore1));
+    embeddedSF.Subscribe("topic1", etl::delegate<void(ByteArray & data)>(dataStore1));
+    embeddedSF.Subscribe("topic2", etl::delegate<void(ByteArray & data)>(dataStore1));
 
     // Publish data on topic
-    serialFiller.Publish("topic1", {'h', 'e', 'l', 'l', 'o'});
+    embeddedSF.Publish("topic1", {'h', 'e', 'l', 'l', 'o'});
     EXPECT_EQ(ByteArray({'h', 'e', 'l', 'l', 'o'}), savedData1);
     savedData1.clear();
 
-    serialFiller.Publish("topic2", {'w', 'o', 'r', 'l', 'd'});
+    embeddedSF.Publish("topic2", {'w', 'o', 'r', 'l', 'd'});
     EXPECT_EQ(ByteArray({'w', 'o', 'r', 'l', 'd'}), savedData1);
     savedData1.clear();
 
     // Publish on topic we haven't registered on
-    serialFiller.Publish("topic3", {});
+    embeddedSF.Publish("topic3", {});
     EXPECT_EQ(ByteArray{}, savedData1);
     savedData1.clear();
 }
@@ -134,27 +134,27 @@ TEST_F(LoopBackTests, LargeAmountOfDataTest)
         0x7A, 0x84, 0x3F});
 
     // Subscribe to some topics (sharing the data object)
-    serialFiller.Subscribe("ATopicWithLotsOfData", etl::delegate<void(ByteArray & data)>(dataStore1));
-    serialFiller.Subscribe("topic2", etl::delegate<void(ByteArray & data)>(dataStore1));
+    embeddedSF.Subscribe("ATopicWithLotsOfData", etl::delegate<void(ByteArray & data)>(dataStore1));
+    embeddedSF.Subscribe("topic2", etl::delegate<void(ByteArray & data)>(dataStore1));
 
     noSubscribersForTopicEventFired = false;
     savedNoSubscriberTopic          = "";
     savedNoSubscriberData.clear();
-    serialFiller.noSubscribersForTopic_ = etl::delegate<void(const Topic& topic, const ByteArray& data)>::create<LoopBackTests, &LoopBackTests::noSubscriberHandler>(*this);
+    embeddedSF.noSubscribersForTopic_ = etl::delegate<void(const Topic& topic, const ByteArray& data)>::create<LoopBackTests, &LoopBackTests::noSubscriberHandler>(*this);
 
     // Publish data on topic
-    serialFiller.Publish("ATopicWithLotsOfData", txData);
+    embeddedSF.Publish("ATopicWithLotsOfData", txData);
     EXPECT_EQ(txData, savedData1);
     savedData1.clear();
 
-    serialFiller.Publish("topic2", {'w', 'o', 'r', 'l', 'd'});
+    embeddedSF.Publish("topic2", {'w', 'o', 'r', 'l', 'd'});
     EXPECT_EQ(ByteArray({'w', 'o', 'r', 'l', 'd'}), savedData1);
     savedData1.clear();
 
     EXPECT_FALSE(noSubscribersForTopicEventFired);
 
     // Publish on topic we haven't subscribed to
-    serialFiller.Publish("topic3", {});
+    embeddedSF.Publish("topic3", {});
     EXPECT_EQ(ByteArray{}, savedData1);
     savedData1.clear();
 
@@ -169,23 +169,23 @@ TEST_F(LoopBackTests, UnsubscribeCorrectId)
     auto  data = ByteArray();
 
     // Subscribe to some topics (sharing the data object)
-    serialFiller.Subscribe("topic1", etl::delegate<void(ByteArray & data)>(dataStore1));
-    auto topic2Id = serialFiller.Subscribe("topic2", etl::delegate<void(ByteArray & data)>(dataStore1));
+    embeddedSF.Subscribe("topic1", etl::delegate<void(ByteArray & data)>(dataStore1));
+    auto topic2Id = embeddedSF.Subscribe("topic2", etl::delegate<void(ByteArray & data)>(dataStore1));
 
     // Publish data on topic
-    serialFiller.Publish("topic1", {'h', 'e', 'l', 'l', 'o'});
+    embeddedSF.Publish("topic1", {'h', 'e', 'l', 'l', 'o'});
     EXPECT_EQ(ByteArray({'h', 'e', 'l', 'l', 'o'}), savedData1);
     savedData1.clear();
 
-    serialFiller.Publish("topic2", {'w', 'o', 'r', 'l', 'd'});
+    embeddedSF.Publish("topic2", {'w', 'o', 'r', 'l', 'd'});
     EXPECT_EQ(ByteArray({'w', 'o', 'r', 'l', 'd'}), savedData1);
     savedData1.clear();
 
     // Now unsubscribe to topic2
-    serialFiller.Unsubscribe(topic2Id);
+    embeddedSF.Unsubscribe(topic2Id);
 
     // We should now not get any data when publishing to topic2
-    serialFiller.Publish("topic2", {'w', 'o', 'r', 'l', 'd'});
+    embeddedSF.Publish("topic2", {'w', 'o', 'r', 'l', 'd'});
     EXPECT_EQ(ByteArray({}), savedData1);
     savedData1.clear();
 }
@@ -196,11 +196,11 @@ TEST_F(LoopBackTests, UnsubscribeWrongId)
     auto  data = ByteArray();
 
     // Subscribe to some topics (sharing the data object)
-    serialFiller.Subscribe("topic1", etl::delegate<void(ByteArray & data)>(dataStore1));
-    auto topic2Id = serialFiller.Subscribe("topic2", etl::delegate<void(ByteArray & data)>(dataStore1));
+    embeddedSF.Subscribe("topic1", etl::delegate<void(ByteArray & data)>(dataStore1));
+    auto topic2Id = embeddedSF.Subscribe("topic2", etl::delegate<void(ByteArray & data)>(dataStore1));
 
     // Attempt to unsubscribe to a ID 1 higher than previously assigned ID
-    EXPECT_EQ(serialFiller.Unsubscribe(topic2Id + 1), StatusCode::ERROR_UNRECOGNISED_SUBSCRIBER);
+    EXPECT_EQ(embeddedSF.Unsubscribe(topic2Id + 1), StatusCode::ERROR_UNRECOGNISED_SUBSCRIBER);
 }
 
 TEST_F(LoopBackTests, UnsubscribeAll)
@@ -209,27 +209,27 @@ TEST_F(LoopBackTests, UnsubscribeAll)
     auto  data = ByteArray();
 
     // Subscribe to some topics (sharing the data object)
-    serialFiller.Subscribe("topic1", etl::delegate<void(ByteArray & data)>(dataStore1));
-    serialFiller.Subscribe("topic2", etl::delegate<void(ByteArray & data)>(dataStore1));
+    embeddedSF.Subscribe("topic1", etl::delegate<void(ByteArray & data)>(dataStore1));
+    embeddedSF.Subscribe("topic2", etl::delegate<void(ByteArray & data)>(dataStore1));
 
     // Publish data on topic (this is before unsubscribing to all)
-    serialFiller.Publish("topic1", {'h', 'e', 'l', 'l', 'o'});
+    embeddedSF.Publish("topic1", {'h', 'e', 'l', 'l', 'o'});
     EXPECT_EQ(ByteArray({'h', 'e', 'l', 'l', 'o'}), savedData1);
     savedData1.clear();
 
-    serialFiller.Publish("topic2", {'w', 'o', 'r', 'l', 'd'});
+    embeddedSF.Publish("topic2", {'w', 'o', 'r', 'l', 'd'});
     EXPECT_EQ(ByteArray({'w', 'o', 'r', 'l', 'd'}), savedData1);
     savedData1.clear();
 
     // Now unsubscribe to all topics
-    serialFiller.UnsubscribeAll();
+    embeddedSF.UnsubscribeAll();
 
     // We should now not get any data when publishing to topic 1 or 2
-    serialFiller.Publish("topic1", {'w', 'o', 'r', 'l', 'd'});
+    embeddedSF.Publish("topic1", {'w', 'o', 'r', 'l', 'd'});
     EXPECT_EQ(ByteArray({}), savedData1);
     savedData1.clear();
 
-    serialFiller.Publish("topic2", {'w', 'o', 'r', 'l', 'd'});
+    embeddedSF.Publish("topic2", {'w', 'o', 'r', 'l', 'd'});
     EXPECT_EQ(ByteArray({}), savedData1);
     savedData1.clear();
 }
@@ -240,10 +240,10 @@ TEST_F(LoopBackTests, NoDataTest)
     auto data  = ByteArray();
 
     // Subscribe to a test topic
-    serialFiller.Subscribe("test-topic", etl::delegate<void(ByteArray & data)>(dataStore2));
+    embeddedSF.Subscribe("test-topic", etl::delegate<void(ByteArray & data)>(dataStore2));
 
     // Publish on topic, no data
-    serialFiller.Publish("test-topic", {});
+    embeddedSF.Publish("test-topic", {});
 
     EXPECT_EQ(true, callbackCalled);
     EXPECT_EQ(ByteArray({}), savedData2);

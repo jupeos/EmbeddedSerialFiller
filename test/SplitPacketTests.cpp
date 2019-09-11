@@ -5,8 +5,8 @@
  */
 
 #include "gtest/gtest.h"
-#include "SerialFiller/SerialFiller.hpp"
-#include "SerialFiller/SerialFillerHelper.hpp"
+#include "EmbeddedSerialFiller/EmbeddedSerialFiller.h"
+#include "EmbeddedSerialFiller/Utilities.h"
 
 using namespace esf;
 

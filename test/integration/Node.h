@@ -12,8 +12,8 @@
 #include <iostream>
 #include <functional>
 #include <thread>
-#include "SerialFiller/SerialFiller.hpp"
-#include "ThreadSafeQ.hpp"
+#include "EmbeddedSerialFiller/EmbeddedSerialFiller.h"
+#include "ThreadSafeQ.h"
 
 namespace esf {
 
@@ -22,7 +22,7 @@ namespace esf {
         public:
 
             std::shared_ptr<Logger> logger_;
-            EmbeddedSerialFiller serialFiller_;
+            EmbeddedSerialFiller embeddedSF;
             CppUtils::ThreadSafeQ<uint8_t> rxQueue_;
 
             Node(std::string name) :
@@ -31,7 +31,7 @@ namespace esf {
                     breakThread_(false) {
                 rxThread_ = std::thread(&Node::RxThreadFn, this);
 
-                serialFiller_.SetAckEnabled(true);
+                embeddedSF.SetAckEnabled(true);
             }
 
             ~Node() {
@@ -56,7 +56,7 @@ namespace esf {
 //                        std::cout << name_ << " received data." << std::endl;
                         ByteQueue dataAsQ;
                         dataAsQ.push_back(data);
-                        serialFiller_.GiveRxData(dataAsQ);
+                        embeddedSF.GiveRxData(dataAsQ);
                     }
 
                     if(breakThread_.load())

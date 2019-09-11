@@ -7,7 +7,7 @@
 #ifndef ESF_UTILITIES_H
 #define ESF_UTILITIES_H
 
-#include "SerialFiller/Definitions.hpp"
+#include "EmbeddedSerialFiller/Definitions.h"
 #include <cstdint>
 
 namespace esf {

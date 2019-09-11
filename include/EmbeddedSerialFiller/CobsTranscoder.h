@@ -7,7 +7,7 @@
 #ifndef ESF_SERIAL_FILLER_COBS_TRANSCODER_H
 #define ESF_SERIAL_FILLER_COBS_TRANSCODER_H
 
-#include "SerialFiller/Definitions.hpp"
+#include "EmbeddedSerialFiller/Definitions.h"
 
 namespace esf {
 

@@ -6,9 +6,9 @@
 
 #include <thread>
 #include "gtest/gtest.h"
-#include "SerialFiller/SerialFiller.hpp"
-#include "ThreadSafeQ.hpp"
-#include "Node.hpp"
+#include "EmbeddedSerialFiller/EmbeddedSerialFiller.h"
+#include "ThreadSafeQ.h"
+#include "Node.h"
 
 using namespace esf;
 
@@ -28,7 +28,7 @@ namespace {
 		void operator()(ByteArray& data) {
 			// This should test that the node2 mutex is unlocked before calling any subscribed callbacks
 			// otherwise we would get into deadlock on this call
-			node2_.serialFiller_.Publish("response", { 0x02 });
+			node2_.embeddedSF.Publish("response", { 0x02 });
 			savedData2 = data;
 		}
     protected:
@@ -39,8 +39,8 @@ namespace {
 
         TwoNodeAckTests() : node1_("node1"), node2_("node2") {
 			// Connect node 1 output to node 2 input and vise versa
-			node1_.serialFiller_.txDataReady_ = etl::delegate<void(const ByteQueue&)>::create<TwoNodeAckTests, &TwoNodeAckTests::loopbackHandler1>(*this);
-			node2_.serialFiller_.txDataReady_ = etl::delegate<void(const ByteQueue&)>::create<TwoNodeAckTests, &TwoNodeAckTests::loopbackHandler2>(*this);
+			node1_.embeddedSF.txDataReady_ = etl::delegate<void(const ByteQueue&)>::create<TwoNodeAckTests, &TwoNodeAckTests::loopbackHandler1>(*this);
+			node2_.embeddedSF.txDataReady_ = etl::delegate<void(const ByteQueue&)>::create<TwoNodeAckTests, &TwoNodeAckTests::loopbackHandler2>(*this);
         }
 
 		void loopbackHandler1(const ByteQueue& data)
@@ -72,16 +72,16 @@ namespace {
         auto data = ByteArray();
 
         // Subscribe to a test topic
-        node2_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore2));
+        node2_.embeddedSF.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore2));
 
         auto dataToSend = ByteArray({ 0x01, 0x02, 0x03, 0x04 });
 
         // Call PublishWait
-        auto gotAck = node1_.serialFiller_.PublishWait("test-topic", dataToSend, std::chrono::milliseconds(1000));
+        auto gotAck = node1_.embeddedSF.PublishWait("test-topic", dataToSend, std::chrono::milliseconds(1000));
 
         EXPECT_TRUE(gotAck);
         EXPECT_EQ(dataToSend, savedData2);
-        EXPECT_EQ(0, node1_.serialFiller_.NumThreadsWaiting());
+        EXPECT_EQ(0, node1_.embeddedSF.NumThreadsWaiting());
     }
 
     TEST_F(TwoNodeAckTests, NoResponse) {
@@ -89,13 +89,13 @@ namespace {
         auto data = ByteArray();
 
         // Subscribe to a test topic
-        node2_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore2));
+        node2_.embeddedSF.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore2));
 
-        node2_.serialFiller_.SetAckEnabled(false);
+        node2_.embeddedSF.SetAckEnabled(false);
 
         // Publish data on topic
         auto dataToSend = ByteArray({ 0x01, 0x02, 0x03, 0x04 });
-        auto gotAck = node1_.serialFiller_.PublishWait("test-topic", dataToSend, std::chrono::milliseconds(1000));
+        auto gotAck = node1_.embeddedSF.PublishWait("test-topic", dataToSend, std::chrono::milliseconds(1000));
         EXPECT_FALSE(gotAck);
         EXPECT_EQ(dataToSend, savedData2);
     }
@@ -105,8 +105,8 @@ namespace {
         auto data = ByteArray();
 
         // Subscribe to a test topic
-        node1_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore1));
-        node2_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore2));
+        node1_.embeddedSF.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore1));
+        node2_.embeddedSF.Subscribe("test-topic", etl::delegate<void(ByteArray& data)>(dataStore2));
 
         // Publish data on topic
         auto node1DataToSend = ByteArray({ 0x01, 0x02, 0x03, 0x04 });
@@ -114,11 +114,11 @@ namespace {
 
         bool node1GotAck;
         std::thread t1([&]() {
-            node1GotAck = node1_.serialFiller_.PublishWait("test-topic", node1DataToSend, std::chrono::milliseconds(1000));
+            node1GotAck = node1_.embeddedSF.PublishWait("test-topic", node1DataToSend, std::chrono::milliseconds(1000));
         });
         bool node2GotAck;
         std::thread t2([&]() {
-            node2GotAck = node2_.serialFiller_.PublishWait("test-topic", node2DataToSend, std::chrono::milliseconds(1000));
+            node2GotAck = node2_.embeddedSF.PublishWait("test-topic", node2DataToSend, std::chrono::milliseconds(1000));
         });
 
         t1.join();
@@ -135,8 +135,8 @@ namespace {
         auto data = ByteArray();
 
         // Subscribe to two topics
-        node2_.serialFiller_.Subscribe("topic1", etl::delegate<void(ByteArray& data)>(dataStore1));
-        node2_.serialFiller_.Subscribe("topic2", etl::delegate<void(ByteArray& data)>(dataStore2));
+        node2_.embeddedSF.Subscribe("topic1", etl::delegate<void(ByteArray& data)>(dataStore1));
+        node2_.embeddedSF.Subscribe("topic2", etl::delegate<void(ByteArray& data)>(dataStore2));
 
 
         // Publish data on both topics
@@ -145,11 +145,11 @@ namespace {
 
         bool msg1GotAck;
         std::thread t1([&]() {
-            msg1GotAck = node1_.serialFiller_.PublishWait("topic1", msg1Data, std::chrono::milliseconds(1000));
+            msg1GotAck = node1_.embeddedSF.PublishWait("topic1", msg1Data, std::chrono::milliseconds(1000));
         });
         bool msg2GotAck;
         std::thread t2([&]() {
-            msg2GotAck = node1_.serialFiller_.PublishWait("topic2", msg2Data, std::chrono::milliseconds(1000));
+            msg2GotAck = node1_.embeddedSF.PublishWait("topic2", msg2Data, std::chrono::milliseconds(1000));
         });
 
         t1.join();
@@ -166,10 +166,10 @@ namespace {
         auto data = ByteArray();
 
         // Subscribe to a test topic
-        node1_.serialFiller_.Subscribe("response", etl::delegate<void(ByteArray& data)>(dataStore1));
-        node2_.serialFiller_.Subscribe("request", etl::delegate<void(ByteArray& data)>(*this));
+        node1_.embeddedSF.Subscribe("response", etl::delegate<void(ByteArray& data)>(dataStore1));
+        node2_.embeddedSF.Subscribe("request", etl::delegate<void(ByteArray& data)>(*this));
 
-        bool node1GotAck = node1_.serialFiller_.PublishWait("request", { 0x01 }, std::chrono::milliseconds(5000));
+        bool node1GotAck = node1_.embeddedSF.PublishWait("request", { 0x01 }, std::chrono::milliseconds(5000));
 
         node2_.Join();
 
@@ -184,18 +184,18 @@ namespace {
         auto data  = ByteArray();
 
         // Subscribe to a test topic
-        node2_.serialFiller_.Subscribe("test-topic", etl::delegate<void(ByteArray & data)>(dataStore2));
+        node2_.embeddedSF.Subscribe("test-topic", etl::delegate<void(ByteArray & data)>(dataStore2));
 
         auto dataToSend = ByteArray({0x01, 0x02, 0x03, 0x04});
 
         for (int i = 0; i < 512; ++i) {
             // Call PublishWait
             savedData2.clear();
-            auto gotAck = node1_.serialFiller_.PublishWait("test-topic", dataToSend, std::chrono::milliseconds(1000));
+            auto gotAck = node1_.embeddedSF.PublishWait("test-topic", dataToSend, std::chrono::milliseconds(1000));
 
             EXPECT_TRUE(gotAck);
             EXPECT_EQ(dataToSend, savedData2);
-            EXPECT_EQ(0, node1_.serialFiller_.NumThreadsWaiting());
+            EXPECT_EQ(0, node1_.embeddedSF.NumThreadsWaiting());
         }
     }
 

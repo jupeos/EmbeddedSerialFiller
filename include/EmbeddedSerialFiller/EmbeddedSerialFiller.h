@@ -7,8 +7,8 @@
 #ifndef ESF_EMBEDDED_SERIAL_FILLER_H
 #define ESF_EMBEDDED_SERIAL_FILLER_H
 
-#include "SerialFiller/Definitions.hpp"
-#include "SerialFiller/Logger.hpp"
+#include "EmbeddedSerialFiller/Definitions.h"
+#include "EmbeddedSerialFiller/Logger.h"
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>

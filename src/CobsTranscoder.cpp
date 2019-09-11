@@ -4,8 +4,8 @@
  * \date    11 Sep 2019
  */
 
-#include "SerialFiller/CobsTranscoder.hpp"
-#include "SerialFiller/Logger.hpp"
+#include "EmbeddedSerialFiller/CobsTranscoder.h"
+#include "EmbeddedSerialFiller/Logger.h"
 #include <iostream>
 
 namespace esf {

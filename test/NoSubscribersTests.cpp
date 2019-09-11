@@ -5,7 +5,7 @@
  */
 
 #include "gtest/gtest.h"
-#include "SerialFiller/SerialFiller.hpp"
+#include "EmbeddedSerialFiller/EmbeddedSerialFiller.h"
 
 using namespace esf;
 
@@ -16,18 +16,18 @@ namespace {
     class NoSubscribersTests : public ::testing::Test {
     protected:
 
-        EmbeddedSerialFiller serialFiller;
+        EmbeddedSerialFiller embeddedSF;
 
         NoSubscribersTests() {
 
             // Connect output to input (software loopback)
-			serialFiller.txDataReady_ = etl::delegate<void(const ByteQueue&)>::create<NoSubscribersTests, &NoSubscribersTests::loopbackHandler>(*this);
-			serialFiller.SetThreadSafetyEnabled(false);
+			embeddedSF.txDataReady_ = etl::delegate<void(const ByteQueue&)>::create<NoSubscribersTests, &NoSubscribersTests::loopbackHandler>(*this);
+			embeddedSF.SetThreadSafetyEnabled(false);
         }
 
 		void loopbackHandler(const ByteQueue& data)
 		{
-			serialFiller.GiveRxData(const_cast<ByteQueue&>(data));
+			embeddedSF.GiveRxData(const_cast<ByteQueue&>(data));
 		}
 
         virtual ~NoSubscribersTests() {
@@ -42,14 +42,14 @@ namespace {
         bool listenerCalled = false;
         Topic savedTopic;
         ByteArray savedData;
-        serialFiller.noSubscribersForTopic_ = [&](Topic topic, ByteArray data) {
+        embeddedSF.noSubscribersForTopic_ = [&](Topic topic, ByteArray data) {
             listenerCalled = true;
             savedTopic = topic;
             savedData = data;
         };
 
         // Publish data on topic
-        serialFiller.Publish("BogusTopic", { 'h', 'e', 'l', 'l', 'o'});
+        embeddedSF.Publish("BogusTopic", { 'h', 'e', 'l', 'l', 'o'});
 
         // Since there was no subscribers, the "no subscribers for topic" event
         // should of fired!
@@ -66,7 +66,7 @@ namespace {
         bool listenerCalled = false;
         Topic savedTopic;
         ByteArray savedData;
-        serialFiller.noSubscribersForTopic_ = [&](Topic topic, ByteArray data) {
+        embeddedSF.noSubscribersForTopic_ = [&](Topic topic, ByteArray data) {
             listenerCalled = true;
             savedTopic = topic;
             savedData = data;
@@ -74,10 +74,10 @@ namespace {
 
         // Subscribe to TestTopic, so that the "no subscribers" event
         // should not be fired
-        serialFiller.Subscribe("TestTopic", etl::delegate<void(ByteArray& data)>(emptyLambda));
+        embeddedSF.Subscribe("TestTopic", etl::delegate<void(ByteArray& data)>(emptyLambda));
 
         // Publish data on topic
-        serialFiller.Publish("TestTopic", { 'h', 'e', 'l', 'l', 'o'});
+        embeddedSF.Publish("TestTopic", { 'h', 'e', 'l', 'l', 'o'});
 
         EXPECT_FALSE(listenerCalled);
     }
