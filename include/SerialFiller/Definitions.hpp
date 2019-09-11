@@ -1,11 +1,11 @@
 /**
- * \file    Definitions.hpp
+ * \file    Definitions.h
  * \author  Julian Mitchell
  * \date    11 Sep 2019
  */
 
-#ifndef ESF_SERIAL_FILLER_DEFINITIONS_H_
-#define ESF_SERIAL_FILLER_DEFINITIONS_H_
+#ifndef ESF_DEFINITIONS_H
+#define ESF_DEFINITIONS_H
 
 #include <etl/cstring.h>
 #include <etl/vector.h>
@@ -24,4 +24,4 @@ enum class StatusCode { SUCCESS, ERROR_CRC_CHECK_FAILED, ERROR_NOT_ENOUGH_BYTES,
 
 } // namespace esf
 
-#endif // #ifndef ESF_SERIAL_FILLER_DEFINITIONS_H_
+#endif // #ifndef ESF_DEFINITIONS_H
