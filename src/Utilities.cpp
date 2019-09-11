@@ -1,11 +1,11 @@
 /**
- * \file    Utilities.hpp
+ * \file    Utilities.cpp
  * \author  Julian Mitchell
  * \date    11 Sep 2019
  */
 
-#include "SerialFiller/SerialFillerHelper.hpp"
-#include "SerialFiller/Logger.hpp"
+#include "SerialFiller/Utilities.h"
+#include "SerialFiller/Logger.h"
 #include <etl/crc16_ccitt.h>
 #include <iostream>
 
