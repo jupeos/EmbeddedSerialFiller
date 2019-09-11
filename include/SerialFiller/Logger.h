@@ -1,11 +1,11 @@
 /**
- * \file    Logger.hpp
+ * \file    Logger.h
  * \author  Julian Mitchell
  * \date    11 Sep 2019
  */
 
-#ifndef ESF_SERIAL_FILLER_LOGGER_H_
-#define ESF_SERIAL_FILLER_LOGGER_H_
+#ifndef ESF_LOGGER_H
+#define ESF_LOGGER_H
 
 #include <functional>
 #include <memory>
@@ -162,4 +162,4 @@ private:
 
 } // namespace esf
 
-#endif // #ifndef ESF_SERIAL_FILLER_LOGGER_H_
+#endif // #ifndef ESF_LOGGER_H
