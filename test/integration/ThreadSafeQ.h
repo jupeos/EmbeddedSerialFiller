@@ -1,11 +1,11 @@
 /**
- * \file    ThreadSafeQ.hpp
+ * \file    ThreadSafeQ.h
  * \author  Julian Mitchell
  * \date    11 Sep 2019
  */
 
-#ifndef ESF_CPP_UTILS_THREAD_SAFE_Q_H_
-#define ESF_CPP_UTILS_THREAD_SAFE_Q_H_
+#ifndef ESF_THREAD_SAFE_Q_H
+#define ESF_THREAD_SAFE_Q_H
 
 #include <queue>
 #include <mutex>
@@ -95,4 +95,4 @@ namespace esf {
     } // namespace CppUtils
 } // namespace esf
 
-#endif // #ifndef ESF_CPP_UTILS_THREAD_SAFE_Q_H_
+#endif // #ifndef ESF_THREAD_SAFE_Q_H
