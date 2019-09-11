@@ -1,11 +1,11 @@
 /**
- * \file    Node.hpp
+ * \file    Node.h
  * \author  Julian Mitchell
  * \date    11 Sep 2019
  */
 
-#ifndef ESF_SERIAL_FILLER_NODE_H_
-#define ESF_SERIAL_FILLER_NODE_H_
+#ifndef ESF_NODE_H
+#define ESF_NODE_H
 
 #include <atomic>
 #include <string>
@@ -72,4 +72,4 @@ namespace esf {
         };
 } // namespace esf
 
-#endif // #ifndef ESF_SERIAL_FILLER_NODE_H_
+#endif // #ifndef ESF_NODE_H
