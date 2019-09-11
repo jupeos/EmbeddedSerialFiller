@@ -1,11 +1,11 @@
 /**
- * \file    CobsTranscoder.hpp
+ * \file    CobsTranscoder.h
  * \author  Julian Mitchell
  * \date    11 Sep 2019
  */
 
-#ifndef ESF_SERIAL_FILLER_COBS_TRANSCODER_H_
-#define ESF_SERIAL_FILLER_COBS_TRANSCODER_H_
+#ifndef ESF_SERIAL_FILLER_COBS_TRANSCODER_H
+#define ESF_SERIAL_FILLER_COBS_TRANSCODER_H
 
 #include "SerialFiller/Definitions.hpp"
 
@@ -26,4 +26,4 @@ public:
 
 } // namespace esf
 
-#endif // #ifndef ESF_SERIAL_FILLER_COBS_TRANSCODER_H_
+#endif // #ifndef ESF_SERIAL_FILLER_COBS_TRANSCODER_H
