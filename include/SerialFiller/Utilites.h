@@ -1,11 +1,11 @@
 /**
- * \file    Utilities.cpp
+ * \file    Utilities.h
  * \author  Julian Mitchell
  * \date    11 Sep 2019
  */
 
-#ifndef ESF_SERIAL_FILLER_SERIAL_FILLER_HELPER_H_
-#define ESF_SERIAL_FILLER_SERIAL_FILLER_HELPER_H_
+#ifndef ESF_UTILITIES_H
+#define ESF_UTILITIES_H
 
 #include "SerialFiller/Definitions.hpp"
 #include <cstdint>
@@ -33,4 +33,4 @@ private:
 
 } // namespace esf
 
-#endif // #ifndef ESF_SERIAL_FILLER_SERIAL_FILLER_HELPER_H_
+#endif // #ifndef ESF_UTILITIES_H
