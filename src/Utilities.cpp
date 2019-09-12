@@ -18,9 +18,9 @@ void Utilities::MoveRxDataInBuffer(ByteArray& newRxData, ByteArray& rxDataBuffer
     // Clear any existing data from packet
     packet.clear();
     size_t idx       = 0;
-    size_t DATA_SIZE = newRxData.size();
+
     // Pop bytes from front of queue
-    while (idx < DATA_SIZE) {
+    while (idx < newRxData.size()) {
         uint8_t byteOfData = newRxData.at(idx++);
         if (rxDataBuffer.full()) {
             //std::cout << config_TERM_TEXT_COLOUR_RED << "rxDataBuffer is full" << config_TERM_TEXT_FORMAT_NORMAL << std::endl;
@@ -39,8 +39,7 @@ void Utilities::MoveRxDataInBuffer(ByteArray& newRxData, ByteArray& rxDataBuffer
             }
 
             rxDataBuffer.clear();
-            ByteArray update(newRxData.begin() + idx, newRxData.end());
-            newRxData = update;
+            newRxData = ByteArray(newRxData.begin() + idx, newRxData.end());
             //                    std::cout << "Move RX data returning." << std::endl;
             return;
         }
@@ -69,8 +68,8 @@ StatusCode Utilities::VerifyCrc(const ByteArray& packet)
         ByteArray packetWithoutCrc(packet.begin(), packet.end() - 2);
 
         // Extract the sent CRC value
-        ByteArray sentCrcString(packet.end() - 2, packet.end());
-        uint16_t  sentCrcVal = static_cast<uint16_t>((static_cast<uint8_t>(sentCrcString[0]) << 8) | static_cast<uint8_t>(sentCrcString[1]) << 0);
+        auto endIter = packet.end();
+        uint16_t sentCrcVal = static_cast<uint16_t>((static_cast<uint8_t>(*(endIter - 2)) << 8) | static_cast<uint8_t>(*(endIter - 1) << 0));
 
         // Calculate CRC
         uint16_t calcCrcVal = etl::crc16_ccitt(packetWithoutCrc.begin(), packetWithoutCrc.end());

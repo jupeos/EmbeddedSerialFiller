@@ -183,7 +183,7 @@ StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
                                 lock.lock();
                         }
 
-                        for (Subscribers::iterator rangeIt = range.first; rangeIt != range.second; ++rangeIt) {
+                        for (auto rangeIt = range.first; rangeIt != range.second; ++rangeIt) {
                             if (threadSafetyEnabled_)
                                 lock.unlock();
                             //                        std::cout << "Calling listener..." << std::endl;
@@ -252,11 +252,9 @@ void EmbeddedSerialFiller::SendAck(uint8_t packetId)
     ByteArray encodedData;
     CobsTranscoder::Encode(packet, encodedData);
 
-    ByteArray txData(encodedData.begin(), encodedData.end());
-
     // Emit TX send event
     if (txDataReady_) {
-        txDataReady_(txData);
+        txDataReady_(encodedData);
     } else {
         LOG((*logger_), ERROR, std::string() + __FUNCTION__ + " was called but txDataReady_ function has no valid function object.");
     }
@@ -286,9 +284,15 @@ void EmbeddedSerialFiller::PublishInternal(const Topic& topic, const ByteArray& 
     // 3rd byte (pre-COBS encoded) is num. of bytes for topic
     packet.push_back(static_cast<uint8_t>(topic.size()));
 
-    std::copy(topic.begin(), topic.end(), std::back_inserter(packet));
+    for(auto it = topic.begin(); it != topic.end(); ++it)
+    {
+        packet.push_back(*it);
+    }
 
-    std::copy(data.begin(), data.end(), std::back_inserter(packet));
+    for(auto it = data.begin(); it != data.end(); ++it)
+    {
+        packet.push_back(*it);
+    }
 
     // Add CRC
     Utilities::AddCrc(packet);
@@ -297,11 +301,9 @@ void EmbeddedSerialFiller::PublishInternal(const Topic& topic, const ByteArray& 
     ByteArray encodedData;
     CobsTranscoder::Encode(packet, encodedData);
 
-    ByteArray txData(encodedData.begin(), encodedData.end());
-
     // Emit TX send event
     if (txDataReady_) {
-        txDataReady_(txData);
+        txDataReady_(encodedData);
     } else {
         LOG((*logger_), ERROR, std::string() + __FUNCTION__ + " was called but txDataReady_ function has no valid function object.");
         return;

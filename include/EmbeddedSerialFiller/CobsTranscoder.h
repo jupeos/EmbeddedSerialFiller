@@ -4,8 +4,8 @@
  * \date    11 Sep 2019
  */
 
-#ifndef ESF_SERIAL_FILLER_COBS_TRANSCODER_H
-#define ESF_SERIAL_FILLER_COBS_TRANSCODER_H
+#ifndef ESF_COBS_TRANSCODER_H
+#define ESF_COBS_TRANSCODER_H
 
 #include "EmbeddedSerialFiller/Definitions.h"
 
@@ -26,4 +26,4 @@ public:
 
 } // namespace esf
 
-#endif // #ifndef ESF_SERIAL_FILLER_COBS_TRANSCODER_H
+#endif // #ifndef ESF_COBS_TRANSCODER_H
