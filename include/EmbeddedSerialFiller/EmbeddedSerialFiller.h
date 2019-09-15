@@ -107,9 +107,6 @@ private:
     /// \brief      Stores what the next sent packet ID should be.
     uint8_t nextPacketId_;
 
-    /// \brief      Is true if acknowledge (ACK) functionality is enabled.
-    bool ackEnabled_;
-
     /// \brief      Mutex that provides thread safety for the EmbeddedSerialFiller class.
     /// \details    Only used if thread safety is enabled via SetThreadSafetyEnabled().
     std::mutex classMutex_;
