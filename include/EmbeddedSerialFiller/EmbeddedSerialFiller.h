@@ -37,7 +37,7 @@ class EmbeddedSerialFiller
 {
 public:
     /// \brief      Enumerates the available EmbeddedSerialFiller packet types.
-    enum class PacketType : uint8_t { PUBLISH = 0x01, ACK = 0x02 };
+    enum class PacketType : uint8_t { BROADCAST = 0x01, ACK = 0x02, PUBLISH = 0x04,};
 
     /// \brief      Basic constructor.
     EmbeddedSerialFiller();
@@ -122,10 +122,7 @@ private:
     uint32_t nextFreeSubsriberId_;
 
     /// \brief      Internal publish method which does not lock the classMutex_.
-    void PublishInternal(const Topic& topic, const ByteArray& data);
-
-    /// \brief      Sends an ACK packet.
-    void SendAck(uint8_t packetId);
+    void PublishInternal(const PacketType& packetType, uint8_t packetId, const Topic& topic, const ByteArray& data);
 };
 
 } // namespace esf

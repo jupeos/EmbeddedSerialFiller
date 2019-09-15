@@ -30,8 +30,6 @@ namespace esf {
                     name_(name),
                     breakThread_(false) {
                 rxThread_ = std::thread(&Node::RxThreadFn, this);
-
-                embeddedSF.SetAckEnabled(true);
             }
 
             ~Node() {

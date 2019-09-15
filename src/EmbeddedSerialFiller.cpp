@@ -12,7 +12,6 @@ namespace esf {
 
 EmbeddedSerialFiller::EmbeddedSerialFiller()
     : nextPacketId_(0)
-    , ackEnabled_(false)
     , threadSafetyEnabled_(true)
     , nextFreeSubsriberId_(0)
 {}
@@ -23,7 +22,7 @@ void EmbeddedSerialFiller::Publish(const Topic& topic, const ByteArray& data)
     if (threadSafetyEnabled_)
         lock.lock();
 
-    PublishInternal(topic, data);
+    PublishInternal(PacketType::BROADCAST, nextPacketId_, topic, data);
 }
 
 bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data, std::chrono::milliseconds timeout)
@@ -33,10 +32,6 @@ bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data
     std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
     if (threadSafetyEnabled_)
         lock.lock();
-
-    if (!ackEnabled_) {
-        LOG((*logger_), WARNING, "PublishWait() called but auto-ACK was not enabled.");
-    }
 
     auto packetId = nextPacketId_;
     if (ackEvents_.available()) {
@@ -48,11 +43,9 @@ bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data
     }
 
     // Call the standard publish
-    PublishInternal(topic, data);
+    PublishInternal(PacketType::PUBLISH, packetId, topic, data);
 
-    bool gotAck;
-    if (ackEnabled_) {
-        gotAck = ackEvents_[packetId]->first.wait_for(lock, timeout, [this, packetId]() {
+    bool gotAck = ackEvents_[packetId]->first.wait_for(lock, timeout, [this, packetId]() {
             auto it = ackEvents_.find(packetId);
             if (it == ackEvents_.end()) {
                 LOG((*logger_), ERROR, "Could not find entry in map.");
@@ -64,9 +57,7 @@ bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data
 
         // Remove event from map
         ackEvents_.erase(packetId);
-    } else {
-        gotAck = true;
-    }
+
     LOG((*logger_), DEBUG, "Method returning...");
     return gotAck;
 }
@@ -157,15 +148,15 @@ StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
                 auto packetType = static_cast<PacketType>(decodedData[0]);
                 // Extract packet ID
                 uint8_t packetId = static_cast<uint8_t>(decodedData.at(1));
-                if (packetType == PacketType::PUBLISH) {
+                if ((packetType == PacketType::BROADCAST) || (packetType == PacketType::PUBLISH)){
                     LOG((*logger_), DEBUG, "Received PUBLISH packet. [1]=" + std::to_string(decodedData.at(1)));
                     // 4. Then split packet into topic and data
                     result = Utilities::SplitPacket(decodedData, 2, topic, data);
                     if (result == StatusCode::SUCCESS) {
                         // WARNING: Make sure to send ack BEFORE invoking topic callbacks, as they may cause other messages
                         // to be sent, and we always want the ACK to be the first thing sent back to the sender.
-                        if (ackEnabled_)
-                            SendAck(packetId);
+                        if (packetType == PacketType::PUBLISH)
+                            PublishInternal(PacketType::ACK, packetId, topic, data);
 
                         // 5. Call every callback associated with this topic
                         RangeType range = subscribers_.equal_range(topic);
@@ -198,15 +189,11 @@ StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
                     }
                 } else if (packetType == PacketType::ACK) {
                     LOG((*logger_), DEBUG, "Received ACK packet.");
-                    if (!ackEnabled_) {
-                        LOG((*logger_), ERROR, "EmbeddedSerialFiller node received ACK packet but auto-ACK was not enabled.");
-                        return StatusCode::ERROR_AUTO_ACK_DISABLED;
-                    }
-
                     //                    std::cout << "Looking for packetId = " << packetId << std::endl;
                     auto it = ackEvents_.find(packetId);
                     if (it == ackEvents_.end()) {
                         //                        std::cout << "No threads waiting on ACK." << std::endl;
+                        return StatusCode::ERROR_UNEXPECTED_ACK;
                     } else {
                         it->second->second = true;
                         it->second->first.notify_all();
@@ -228,40 +215,6 @@ StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
     return result;
 }
 
-void EmbeddedSerialFiller::SetAckEnabled(bool value)
-{
-    ackEnabled_ = value;
-}
-
-void EmbeddedSerialFiller::SendAck(uint8_t packetId)
-{
-    LOG((*logger_), DEBUG, "SendAck called with packetId = " + std::to_string(packetId));
-
-    ByteArray packet;
-
-    // 1st byte is the packet type, in this case it's ACK
-    packet.push_back(static_cast<uint8_t>(PacketType::ACK));
-
-    // 2nd byte is the packet identifier
-    packet.push_back(packetId);
-
-    // Add CRC
-    Utilities::AddCrc(packet);
-
-    // Encode data using COBS
-    ByteArray encodedData;
-    CobsTranscoder::Encode(packet, encodedData);
-
-    // Emit TX send event
-    if (txDataReady_) {
-        txDataReady_(encodedData);
-    } else {
-        LOG((*logger_), ERROR, std::string() + __FUNCTION__ + " was called but txDataReady_ function has no valid function object.");
-    }
-
-    //            std::cout << "SendAck() finished." << std::endl;
-}
-
 uint32_t EmbeddedSerialFiller::NumThreadsWaiting()
 {
     std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
@@ -271,27 +224,38 @@ uint32_t EmbeddedSerialFiller::NumThreadsWaiting()
     return static_cast<uint32_t>(ackEvents_.size());
 }
 
-void EmbeddedSerialFiller::PublishInternal(const Topic& topic, const ByteArray& data)
+void EmbeddedSerialFiller::PublishInternal(const PacketType& packetType, uint8_t packetId, const Topic& topic, const ByteArray& data)
 {
     ByteArray packet;
 
     // 1st byte is the packet type, in this case it's PUBLISH
-    packet.push_back(static_cast<uint8_t>(PacketType::PUBLISH));
+    packet.push_back(static_cast<uint8_t>(packetType));
 
     // 2nd byte is the packet identifier
-    packet.push_back(nextPacketId_);
+    packet.push_back(packetId);
 
-    // 3rd byte (pre-COBS encoded) is num. of bytes for topic
-    packet.push_back(static_cast<uint8_t>(topic.size()));
-
-    for(auto it = topic.begin(); it != topic.end(); ++it)
+    switch(packetType)
     {
-        packet.push_back(*it);
-    }
+        case PacketType::BROADCAST:
+        case PacketType::PUBLISH:
+        {
+            // 3rd byte (pre-COBS encoded) is num. of bytes for topic
+            packet.push_back(static_cast<uint8_t>(topic.size()));
 
-    for(auto it = data.begin(); it != data.end(); ++it)
-    {
-        packet.push_back(*it);
+            for(auto it = topic.begin(); it != topic.end(); ++it)
+            {
+                packet.push_back(*it);
+            }
+
+            for(auto it = data.begin(); it != data.end(); ++it)
+            {
+                packet.push_back(*it);
+            }
+        }
+        break;
+        case PacketType::ACK:
+        default:
+        break;
     }
 
     // Add CRC
@@ -309,8 +273,11 @@ void EmbeddedSerialFiller::PublishInternal(const Topic& topic, const ByteArray& 
         return;
     }
 
-    // If everything was successful, increment packet ID
-    nextPacketId_ += 1;
+    if(packetType != PacketType::ACK)
+    {
+        // If everything was successful, increment packet ID
+        nextPacketId_ += 1;
+    }
 }
 
 void EmbeddedSerialFiller::SetThreadSafetyEnabled(bool value)
