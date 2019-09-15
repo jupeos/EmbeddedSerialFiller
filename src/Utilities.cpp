@@ -17,7 +17,7 @@ void Utilities::MoveRxDataInBuffer(ByteArray& newRxData, ByteArray& rxDataBuffer
 
     // Clear any existing data from packet
     packet.clear();
-    size_t idx       = 0;
+    size_t idx = 0;
 
     // Pop bytes from front of queue
     while (idx < newRxData.size()) {
@@ -64,15 +64,12 @@ StatusCode Utilities::VerifyCrc(const ByteArray& packet)
         //LOG((*logger_), ERROR, "Cannot verify CRC with less than 3 bytes in packet.");
         return StatusCode::ERROR_NOT_ENOUGH_BYTES;
     } else {
-        // Create a string of the packet without the CRC
-        ByteArray packetWithoutCrc(packet.begin(), packet.end() - 2);
-
         // Extract the sent CRC value
-        auto endIter = packet.end();
+        auto     endIter    = packet.end();
         uint16_t sentCrcVal = static_cast<uint16_t>((static_cast<uint8_t>(*(endIter - 2)) << 8) | static_cast<uint8_t>(*(endIter - 1) << 0));
 
         // Calculate CRC
-        uint16_t calcCrcVal = etl::crc16_ccitt(packetWithoutCrc.begin(), packetWithoutCrc.end());
+        uint16_t calcCrcVal = etl::crc16_ccitt(packet.begin(), packet.end() - 2);
 
         if (sentCrcVal != calcCrcVal) {
             //std::cout << config_TERM_TEXT_COLOUR_RED << "CRC check failed." << config_TERM_TEXT_FORMAT_NORMAL << std::endl;
@@ -94,8 +91,16 @@ StatusCode Utilities::SplitPacket(const ByteArray& packet, uint32_t startAt, Top
         return StatusCode::ERROR_LENGTH_OF_TOPIC_TOO_LONG;
     }
 
-    topic = Topic(packet.begin() + 1 + startAt, packet.begin() + 1 + startAt + lengthOfTopic);
-    data = ByteArray(packet.begin() + 1 + startAt + lengthOfTopic, packet.end() - 2);
+    auto it1 = packet.begin() + 1 + startAt + lengthOfTopic;
+    auto it2 = packet.end() - 2;
+    topic.clear();
+    for (auto it = packet.begin() + 1 + startAt; it != it1; ++it) {
+        topic.push_back(*it);
+    }
+    data.clear();
+    for (auto it = it1; it != it2; ++it) {
+        data.push_back(*it);
+    }
     return StatusCode::SUCCESS;
 }
 
