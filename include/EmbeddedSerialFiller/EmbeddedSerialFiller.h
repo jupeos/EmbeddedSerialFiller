@@ -69,10 +69,6 @@ public:
     ///             it will then call all callbacks associated with that topic.
     StatusCode GiveRxData(ByteArray& rxData);
 
-    /// \brief      Use to enable/disable the sending to ACK (acknowledgement) packets when a publish packet
-    ///             is received. Must be enabled if PublishWait() is going to be used.
-    void SetAckEnabled(bool value);
-
     /// \brief      Use to enable/disable thread safety (enabled by default). Enabling thread safety makes all EmbeddedSerialFiller API
     ///             methods take out a lock on enter, and release on exit. PublishWait() releases lock when it blocks (so
     ///             PublishWait() can be called multiple times from different threads).
