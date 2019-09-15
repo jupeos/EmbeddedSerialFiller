@@ -21,13 +21,14 @@ namespace {
         }
     };
 
+    static ByteQueue savedTxData;
+
     TEST_F(CallbackTests, CallbackTest1) {
 
 
         EmbeddedSerialFiller embeddedSF;
 
-        ByteQueue savedTxData;
-        embeddedSF.txDataReady_ = ([&](ByteQueue txData) -> void {
+        embeddedSF.txDataReady_ = ([&](const ByteQueue& txData) -> void {
             savedTxData = txData;
         });
 

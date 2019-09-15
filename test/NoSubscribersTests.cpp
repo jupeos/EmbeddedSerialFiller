@@ -34,14 +34,16 @@ namespace {
         }
     };
 
+    static bool listenerCalled = false;
+    static Topic savedTopic;
+    static ByteArray savedData;
+
     TEST_F(NoSubscribersTests, NoSubscribersEventFired) {
         auto topic = ByteArray();
         auto data = ByteArray();
 
         // Add listener to "no subscribers for topic" event
-        bool listenerCalled = false;
-        Topic savedTopic;
-        ByteArray savedData;
+
         embeddedSF.noSubscribersForTopic_ = [&](Topic topic, ByteArray data) {
             listenerCalled = true;
             savedTopic = topic;
