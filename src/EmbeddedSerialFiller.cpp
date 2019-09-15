@@ -22,7 +22,7 @@ void EmbeddedSerialFiller::Publish(const Topic& topic, const ByteArray& data)
     if (threadSafetyEnabled_)
         lock.lock();
 
-    PublishInternal(PacketType::BROADCAST, nextPacketId_, topic, data);
+    PublishInternal(PacketType::BROADCAST, nextPacketId_, &topic, &data);
 }
 
 bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data, std::chrono::milliseconds timeout)
@@ -33,6 +33,7 @@ bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data
     if (threadSafetyEnabled_)
         lock.lock();
 
+    // Take a copy since PublishInternal updates the value of nextPacketId_.
     auto packetId = nextPacketId_;
     if (ackEvents_.available()) {
         // Create cv and bool
@@ -43,20 +44,20 @@ bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data
     }
 
     // Call the standard publish
-    PublishInternal(PacketType::PUBLISH, packetId, topic, data);
+    PublishInternal(PacketType::PUBLISH, nextPacketId_, &topic, &data);
 
     bool gotAck = ackEvents_[packetId]->first.wait_for(lock, timeout, [this, packetId]() {
-            auto it = ackEvents_.find(packetId);
-            if (it == ackEvents_.end()) {
-                LOG((*logger_), ERROR, "Could not find entry in map.");
-                return false;
-            }
+        auto it = ackEvents_.find(packetId);
+        if (it == ackEvents_.end()) {
+            LOG((*logger_), ERROR, "Could not find entry in map.");
+            return false;
+        }
 
-            return it->second->second;
-        });
+        return it->second->second;
+    });
 
-        // Remove event from map
-        ackEvents_.erase(packetId);
+    // Remove event from map
+    ackEvents_.erase(packetId);
 
     LOG((*logger_), DEBUG, "Method returning...");
     return gotAck;
@@ -131,7 +132,6 @@ StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
         LOG((*logger_), DEBUG, "rxBuffer_ now = " + CppUtils::String::ToHex(rxBuffer_));
         LOG((*logger_), DEBUG, "rxData now = " + CppUtils::String::ToHex(rxData));
         Topic     topic;
-        ByteArray data;
 
         //==============================//
         //======= FOR EACH PACKET ======//
@@ -148,15 +148,16 @@ StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
                 auto packetType = static_cast<PacketType>(decodedData[0]);
                 // Extract packet ID
                 uint8_t packetId = static_cast<uint8_t>(decodedData.at(1));
-                if ((packetType == PacketType::BROADCAST) || (packetType == PacketType::PUBLISH)){
+                if ((packetType == PacketType::BROADCAST) || (packetType == PacketType::PUBLISH)) {
                     LOG((*logger_), DEBUG, "Received PUBLISH packet. [1]=" + std::to_string(decodedData.at(1)));
-                    // 4. Then split packet into topic and data
+                    // 4. Then split packet into topic and data (let's just reuse the packet container for this);
+                    ByteArray& data = packet;
                     result = Utilities::SplitPacket(decodedData, 2, topic, data);
                     if (result == StatusCode::SUCCESS) {
                         // WARNING: Make sure to send ack BEFORE invoking topic callbacks, as they may cause other messages
                         // to be sent, and we always want the ACK to be the first thing sent back to the sender.
                         if (packetType == PacketType::PUBLISH)
-                            PublishInternal(PacketType::ACK, packetId, topic, data);
+                            PublishInternal(PacketType::ACK, packetId);
 
                         // 5. Call every callback associated with this topic
                         RangeType range = subscribers_.equal_range(topic);
@@ -224,7 +225,7 @@ uint32_t EmbeddedSerialFiller::NumThreadsWaiting()
     return static_cast<uint32_t>(ackEvents_.size());
 }
 
-void EmbeddedSerialFiller::PublishInternal(const PacketType& packetType, uint8_t packetId, const Topic& topic, const ByteArray& data)
+void EmbeddedSerialFiller::PublishInternal(const PacketType& packetType, uint8_t& packetId, const Topic* topic /* = nullptr*/, const ByteArray* data /* = nullptr*/)
 {
     ByteArray packet;
 
@@ -234,27 +235,25 @@ void EmbeddedSerialFiller::PublishInternal(const PacketType& packetType, uint8_t
     // 2nd byte is the packet identifier
     packet.push_back(packetId);
 
-    switch(packetType)
-    {
-        case PacketType::BROADCAST:
-        case PacketType::PUBLISH:
-        {
+    switch (packetType) {
+    case PacketType::BROADCAST:
+    case PacketType::PUBLISH: {
+        if (topic != nullptr) {
             // 3rd byte (pre-COBS encoded) is num. of bytes for topic
-            packet.push_back(static_cast<uint8_t>(topic.size()));
+            packet.push_back(static_cast<uint8_t>(topic->size()));
 
-            for(auto it = topic.begin(); it != topic.end(); ++it)
-            {
-                packet.push_back(*it);
-            }
-
-            for(auto it = data.begin(); it != data.end(); ++it)
-            {
+            for (auto it = topic->begin(); it != topic->end(); ++it) {
                 packet.push_back(*it);
             }
         }
-        break;
-        case PacketType::ACK:
-        default:
+        if (data != nullptr) {
+            for (auto it = data->begin(); it != data->end(); ++it) {
+                packet.push_back(*it);
+            }
+        }
+    } break;
+    case PacketType::ACK:
+    default:
         break;
     }
 
@@ -273,10 +272,9 @@ void EmbeddedSerialFiller::PublishInternal(const PacketType& packetType, uint8_t
         return;
     }
 
-    if(packetType != PacketType::ACK)
-    {
+    if (packetType != PacketType::ACK) {
         // If everything was successful, increment packet ID
-        nextPacketId_ += 1;
+        ++packetId;
     }
 }
 
