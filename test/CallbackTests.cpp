@@ -4,37 +4,32 @@
  * \date    11 Sep 2019
  */
 
-#include "gtest/gtest.h"
 #include "EmbeddedSerialFiller/EmbeddedSerialFiller.h"
+#include "gtest/gtest.h"
 
 using namespace esf;
 
 namespace {
 
-    class CallbackTests : public ::testing::Test {
-    protected:
+class CallbackTests : public ::testing::Test
+{
+protected:
+    CallbackTests() {}
 
-        CallbackTests() {
-        }
+    virtual ~CallbackTests() {}
+};
 
-        virtual ~CallbackTests() {
-        }
-    };
+static ByteQueue savedTxData;
 
-    static ByteQueue savedTxData;
+TEST_F(CallbackTests, CallbackTest1)
+{
+    EmbeddedSerialFiller embeddedSF;
 
-    TEST_F(CallbackTests, CallbackTest1) {
+    embeddedSF.txDataReady_ = ([&](const ByteQueue& txData) -> void { savedTxData = txData; });
 
+    embeddedSF.Publish("test-topic", ByteArray({'h', 'e', 'l', 'l', 'o'}));
 
-        EmbeddedSerialFiller embeddedSF;
+    EXPECT_NE(0, savedTxData.size());
+}
 
-        embeddedSF.txDataReady_ = ([&](const ByteQueue& txData) -> void {
-            savedTxData = txData;
-        });
-
-        embeddedSF.Publish("test-topic", ByteArray({ 'h', 'e', 'l', 'l', 'o' }));
-
-        EXPECT_NE(0, savedTxData.size());
-    }
-
-}  // namespace
+} // namespace

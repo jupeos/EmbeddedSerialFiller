@@ -7,67 +7,66 @@
 #ifndef ESF_NODE_H
 #define ESF_NODE_H
 
-#include <atomic>
-#include <string>
-#include <iostream>
-#include <functional>
-#include <thread>
 #include "EmbeddedSerialFiller/EmbeddedSerialFiller.h"
 #include "ThreadSafeQ.h"
+#include <atomic>
+#include <functional>
+#include <iostream>
+#include <string>
+#include <thread>
 
 namespace esf {
 
-        class Node {
+class Node
+{
+public:
+    std::shared_ptr<Logger>        logger_;
+    EmbeddedSerialFiller           embeddedSF;
+    CppUtils::ThreadSafeQ<uint8_t> rxQueue_;
 
-        public:
+    Node(std::string name)
+        : logger_(new Logger("EmbeddedSerialFiller", Logger::Severity::NONE, Logger::Color::CYAN, [](std::string msg) { std::cout << msg << std::endl; }))
+        , name_(name)
+        , breakThread_(false)
+    {
+        rxThread_ = std::thread(&Node::RxThreadFn, this);
+    }
 
-            std::shared_ptr<Logger> logger_;
-            EmbeddedSerialFiller embeddedSF;
-            CppUtils::ThreadSafeQ<uint8_t> rxQueue_;
+    ~Node() { Join(); }
 
-            Node(std::string name) :
-                    logger_(new Logger("EmbeddedSerialFiller", Logger::Severity::NONE, Logger::Color::CYAN, [](std::string msg) { std::cout << msg << std::endl; })),
-                    name_(name),
-                    breakThread_(false) {
-                rxThread_ = std::thread(&Node::RxThreadFn, this);
+    void Join()
+    {
+        if (rxThread_.joinable()) {
+            breakThread_.store(true);
+            rxThread_.join();
+        }
+    }
+
+    void RxThreadFn()
+    {
+        //                std::cout << __FUNCTION__ << "() called for " << name_ << std::endl;
+
+        while (true) {
+            // Wait for data to arrive on the queue
+            //                    std::cout << "RX thread for " << name_ << " still running..." << std::endl;
+            uint8_t data;
+            if (rxQueue_.TryPop(data, std::chrono::milliseconds(1000))) {
+                //                        std::cout << name_ << " received data." << std::endl;
+                ByteQueue dataAsQ;
+                dataAsQ.push_back(data);
+                embeddedSF.GiveRxData(dataAsQ);
             }
 
-            ~Node() {
-                Join();
-            }
+            if (breakThread_.load())
+                break;
+        }
+    }
 
-            void Join() {
-                if(rxThread_.joinable()) {
-                    breakThread_.store(true);
-                    rxThread_.join();
-                }
-            }
-
-            void RxThreadFn() {
-//                std::cout << __FUNCTION__ << "() called for " << name_ << std::endl;
-
-                while (true) {
-                    // Wait for data to arrive on the queue
-//                    std::cout << "RX thread for " << name_ << " still running..." << std::endl;
-                    uint8_t data;
-                    if (rxQueue_.TryPop(data, std::chrono::milliseconds(1000))) {
-//                        std::cout << name_ << " received data." << std::endl;
-                        ByteQueue dataAsQ;
-                        dataAsQ.push_back(data);
-                        embeddedSF.GiveRxData(dataAsQ);
-                    }
-
-                    if(breakThread_.load())
-                        break;
-                }
-
-            }
-
-        private:
-            std::string name_;
-            std::thread rxThread_;
-            std::atomic<bool> breakThread_;
-        };
+private:
+    std::string       name_;
+    std::thread       rxThread_;
+    std::atomic<bool> breakThread_;
+};
 } // namespace esf
 
 #endif // #ifndef ESF_NODE_H
