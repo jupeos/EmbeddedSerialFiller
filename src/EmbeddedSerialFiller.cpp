@@ -47,20 +47,15 @@ bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data
     // Call the standard publish
     PublishInternal(PacketType::PUBLISH, nextPacketId_, &topic, &data);
 
-    bool gotAck = ackEvent.eventType->first.wait_for(lock, timeout, [this, packetId]() {
+    bool gotAck = false;
+    if (ackEvent.eventType->first.wait_for(lock, timeout) == std::cv_status::no_timeout) {
         for (auto it = ackEvents_.begin(); it != ackEvents_.end(); ++it) {
             if (it->ID == packetId) {
-                return it->eventType->second;
+                gotAck = it->eventType->second;
+                // Remove event from map
+                ackEvents_.erase(it);
+                break;
             }
-        }
-        return false;
-    });
-
-    // Remove event from map
-    for (auto it = ackEvents_.begin(); it != ackEvents_.end(); ++it) {
-        if (it->ID == packetId) {
-            ackEvents_.erase(it);
-            break;
         }
     }
 

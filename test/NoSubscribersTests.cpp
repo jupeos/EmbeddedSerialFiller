@@ -25,7 +25,8 @@ protected:
         embeddedSF.SetThreadSafetyEnabled(false);
     }
 
-    void loopbackHandler(const ByteQueue& data) { embeddedSF.GiveRxData(const_cast<ByteQueue&>(data)); }
+    ByteArray loopbackData;
+    void      loopbackHandler(const ByteQueue& data) { loopbackData = data; }
 
     virtual ~NoSubscribersTests() {}
 };
@@ -49,6 +50,7 @@ TEST_F(NoSubscribersTests, NoSubscribersEventFired)
 
     // Publish data on topic
     embeddedSF.Publish("BogusTopic", {'h', 'e', 'l', 'l', 'o'});
+    embeddedSF.GiveRxData(loopbackData);
 
     // Since there was no subscribers, the "no subscribers for topic" event
     // should of fired!
@@ -78,6 +80,7 @@ TEST_F(NoSubscribersTests, NoSubscribersEventNotFired)
 
     // Publish data on topic
     embeddedSF.Publish("TestTopic", {'h', 'e', 'l', 'l', 'o'});
+    embeddedSF.GiveRxData(loopbackData);
 
     EXPECT_FALSE(listenerCalled);
 }
