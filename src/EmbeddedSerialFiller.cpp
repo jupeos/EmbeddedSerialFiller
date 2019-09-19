@@ -183,15 +183,13 @@ StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
                             // If no subscribers are listening to this topic,
                             // fire the "no subscribers for topic" event (user can
                             // listen to this)
-                            if (it->subscribers.empty()) {
-                                if (threadSafetyEnabled_)
-                                    lock.unlock();
-                                if (noSubscribersForTopic_) {
-                                    noSubscribersForTopic_(topic, data);
-                                }
-                                if (threadSafetyEnabled_)
-                                    lock.lock();
+                            if (threadSafetyEnabled_)
+                                lock.unlock();
+                            if (noSubscribersForTopic_) {
+                                noSubscribersForTopic_(topic, data);
                             }
+                            if (threadSafetyEnabled_)
+                                lock.lock();
                         } else {
                             for (auto subIter = it->subscribers.begin(); subIter != it->subscribers.end(); ++subIter) {
                                 if (threadSafetyEnabled_)
