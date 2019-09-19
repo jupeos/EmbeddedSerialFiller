@@ -13,8 +13,6 @@
 #include <condition_variable>
 #include <cstdint>
 #include <etl/delegate.h>
-#include <etl/map.h>
-#include <etl/multimap.h>
 #include <iostream>
 
 namespace esf {
@@ -100,9 +98,13 @@ private:
         etl::delegate<void(ByteArray&)> callback_;
     };
 
-    typedef etl::multimap<Topic, Subscriber, MAX_SUBSCRIBERS>       Subscribers;
-    typedef std::pair<Subscribers::iterator, Subscribers::iterator> RangeType;
-    Subscribers                                                     subscribers_;
+    struct SubscriberType
+    {
+        Topic                                    topic;
+        etl::vector<Subscriber, MAX_SUBSCRIBERS> subscribers;
+    };
+    typedef etl::vector<SubscriberType, MAX_SUBSCRIBERS> SubscriberList;
+    SubscriberList                                       subscribers_;
 
     /// \brief      Stores what the next sent packet ID should be.
     uint8_t nextPacketId_;
@@ -113,7 +115,13 @@ private:
 
     bool threadSafetyEnabled_;
 
-    etl::map<uint8_t, std::shared_ptr<EventType>, MAX_PENDING_ACKS> ackEvents_;
+    struct AckEvents
+    {
+        uint8_t                    ID;
+        std::shared_ptr<EventType> eventType;
+    };
+
+    etl::vector<AckEvents, MAX_PENDING_ACKS> ackEvents_;
 
     /// \brief      Holds the value of the next ID that will be assigned when Subscribe() is called.
     uint32_t nextFreeSubsriberId_;

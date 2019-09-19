@@ -35,9 +35,10 @@ bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data
 
     // Take a copy since PublishInternal updates the value of nextPacketId_.
     auto packetId = nextPacketId_;
-    if (ackEvents_.available()) {
+    auto ackEvent = AckEvents({packetId, std::make_shared<EventType>()});
+    if (ackEvents_.full() == false) {
         // Create cv and bool
-        ackEvents_[packetId] = std::make_shared<EventType>();
+        ackEvents_.push_back(ackEvent);
     } else {
         LOG((*logger_), ERROR, "PublishWait() ackEvents is full. Increase the size of MAX_PENDING_ACKS.");
         return false;
@@ -46,18 +47,22 @@ bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data
     // Call the standard publish
     PublishInternal(PacketType::PUBLISH, nextPacketId_, &topic, &data);
 
-    bool gotAck = ackEvents_[packetId]->first.wait_for(lock, timeout, [this, packetId]() {
-        auto it = ackEvents_.find(packetId);
-        if (it == ackEvents_.end()) {
-            LOG((*logger_), ERROR, "Could not find entry in map.");
-            return false;
+    bool gotAck = ackEvent.eventType->first.wait_for(lock, timeout, [this, packetId]() {
+        for (auto it = ackEvents_.begin(); it != ackEvents_.end(); ++it) {
+            if (it->ID == packetId) {
+                return it->eventType->second;
+            }
         }
-
-        return it->second->second;
+        return false;
     });
 
     // Remove event from map
-    ackEvents_.erase(packetId);
+    for (auto it = ackEvents_.begin(); it != ackEvents_.end(); ++it) {
+        if (it->ID == packetId) {
+            ackEvents_.erase(it);
+            break;
+        }
+    }
 
     LOG((*logger_), DEBUG, "Method returning...");
     return gotAck;
@@ -78,28 +83,40 @@ uint32_t EmbeddedSerialFiller::Subscribe(const Topic& topic, etl::delegate<void(
     Subscriber subscriber;
     subscriber.id_       = id;
     subscriber.callback_ = callback;
-    subscribers_.insert({topic, subscriber});
-
+    for (auto it = subscribers_.begin(); it != subscribers_.end(); ++it) {
+        if (it->topic == topic) {
+            it->subscribers.push_back(subscriber);
+            return id;
+        }
+    }
+    SubscriberType st;
+    st.topic = topic;
+    st.subscribers.push_back(subscriber);
+    subscribers_.push_back(st);
     return id;
 }
 
 StatusCode EmbeddedSerialFiller::Unsubscribe(uint32_t subscriberId)
 {
+    auto                         retVal = StatusCode::ERROR_UNRECOGNISED_SUBSCRIBER;
     std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
     if (threadSafetyEnabled_)
         lock.lock();
 
     // Search for subscriber with provided ID
     for (auto it = subscribers_.begin(); it != subscribers_.end(); ++it) {
-        if ((*it).second.id_ == subscriberId) {
-            subscribers_.erase(it);
-            return StatusCode::SUCCESS;
+        for (auto subIt = it->subscribers.begin(); subIt != it->subscribers.end(); ++subIt) {
+            if (subIt->id_ == subscriberId) {
+                it->subscribers.erase(subIt);
+                retVal = StatusCode::SUCCESS;
+                break;
+            }
         }
     }
 
     // If we reach here, no subscriber was found!
     LOG((*logger_), ERROR, std::string() + __FUNCTION__ + " called but subscriber ID of " + std::to_string(subscriberId) + " was not found.");
-    return StatusCode::ERROR_UNRECOGNISED_SUBSCRIBER;
+    return retVal;
 }
 
 void EmbeddedSerialFiller::UnsubscribeAll()
@@ -131,7 +148,7 @@ StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
         LOG((*logger_), DEBUG, "Found packet. Data (COBS encoded) = " + CppUtils::String::ToHex(packet));
         LOG((*logger_), DEBUG, "rxBuffer_ now = " + CppUtils::String::ToHex(rxBuffer_));
         LOG((*logger_), DEBUG, "rxData now = " + CppUtils::String::ToHex(rxData));
-        Topic     topic;
+        Topic topic;
 
         //==============================//
         //======= FOR EACH PACKET ======//
@@ -152,7 +169,7 @@ StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
                     LOG((*logger_), DEBUG, "Received PUBLISH packet. [1]=" + std::to_string(decodedData.at(1)));
                     // 4. Then split packet into topic and data (let's just reuse the packet container for this);
                     ByteArray& data = packet;
-                    result = Utilities::SplitPacket(decodedData, 2, topic, data);
+                    result          = Utilities::SplitPacket(decodedData, 2, topic, data);
                     if (result == StatusCode::SUCCESS) {
                         // WARNING: Make sure to send ack BEFORE invoking topic callbacks, as they may cause other messages
                         // to be sent, and we always want the ACK to be the first thing sent back to the sender.
@@ -160,30 +177,37 @@ StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
                             PublishInternal(PacketType::ACK, packetId);
 
                         // 5. Call every callback associated with this topic
-                        RangeType range = subscribers_.equal_range(topic);
-
-                        // If no subscribers are listening to this topic,
-                        // fire the "no subscribers for topic" event (user can
-                        // listen to this)
-                        if (range.first == range.second) {
-                            if (threadSafetyEnabled_)
-                                lock.unlock();
-                            if (noSubscribersForTopic_) {
-                                noSubscribersForTopic_(topic, data);
+                        //RangeType range = subscribers_.equal_range(topic);
+                        auto it = subscribers_.begin();
+                        for (; it != subscribers_.end(); ++it) {
+                            if (it->topic == topic) {
+                                break;
                             }
-                            if (threadSafetyEnabled_)
-                                lock.lock();
                         }
-
-                        for (auto rangeIt = range.first; rangeIt != range.second; ++rangeIt) {
-                            if (threadSafetyEnabled_)
-                                lock.unlock();
-                            //                        std::cout << "Calling listener..." << std::endl;
-                            rangeIt->second.callback_(data);
-                            //                        std::cout << "Listener finished, relocking..." << std::endl;
-                            if (threadSafetyEnabled_)
-                                lock.lock();
-                            //                        std::cout << "Relocked." << std::endl;
+                        if (it == subscribers_.end()) {
+                            // If no subscribers are listening to this topic,
+                            // fire the "no subscribers for topic" event (user can
+                            // listen to this)
+                            if (it->subscribers.empty()) {
+                                if (threadSafetyEnabled_)
+                                    lock.unlock();
+                                if (noSubscribersForTopic_) {
+                                    noSubscribersForTopic_(topic, data);
+                                }
+                                if (threadSafetyEnabled_)
+                                    lock.lock();
+                            }
+                        } else {
+                            for (auto subIter = it->subscribers.begin(); subIter != it->subscribers.end(); ++subIter) {
+                                if (threadSafetyEnabled_)
+                                    lock.unlock();
+                                //                        std::cout << "Calling listener..." << std::endl;
+                                subIter->callback_(data);
+                                //                        std::cout << "Listener finished, relocking..." << std::endl;
+                                if (threadSafetyEnabled_)
+                                    lock.lock();
+                                //                        std::cout << "Relocked." << std::endl;
+                            }
                         }
                     } else {
                         break;
@@ -191,13 +215,18 @@ StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
                 } else if (packetType == PacketType::ACK) {
                     LOG((*logger_), DEBUG, "Received ACK packet.");
                     //                    std::cout << "Looking for packetId = " << packetId << std::endl;
-                    auto it = ackEvents_.find(packetId);
+                    auto it = ackEvents_.begin();
+                    for (; it != ackEvents_.end(); ++it) {
+                        if (it->ID == packetId) {
+                            break;
+                        }
+                    }
                     if (it == ackEvents_.end()) {
                         //                        std::cout << "No threads waiting on ACK." << std::endl;
                         return StatusCode::ERROR_UNEXPECTED_ACK;
                     } else {
-                        it->second->second = true;
-                        it->second->first.notify_all();
+                        it->eventType->second = true;
+                        it->eventType->first.notify_all();
                     }
                 } else {
                     LOG((*logger_), ERROR, "Received packet type not recognized.");
