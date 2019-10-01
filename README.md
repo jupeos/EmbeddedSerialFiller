@@ -8,7 +8,7 @@ The main differences to SerialFiller are:
 
 - No use of STL containers (all replaced with ETL)
 - As a result no dynamic heap allocation
-- Exact footprint determined by user definitions in `Definitions.hpp`
+- Exact footprint determined by user definitions in `Definitions.h`
 - Protocol change to use a single byte packet identifier vs 2 bytes in SF
 - No exceptions (replaced by `StatusCode` enumeration)
 - Removal of Logger (temporarily)
