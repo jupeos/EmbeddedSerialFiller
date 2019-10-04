@@ -10,7 +10,7 @@
 #include <etl/cstring.h>
 #include <etl/vector.h>
 
-#define MAX_PACKET_SIZE 512
+#define MAX_PACKET_SIZE 1024
 #define MAX_TOPIC_LENGTH 16
 #define MAX_SUBSCRIBERS 8
 #define MAX_PENDING_ACKS 8

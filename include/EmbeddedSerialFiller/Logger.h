@@ -49,7 +49,7 @@ class Logger
 {
 public:
     enum class Severity {
-        DEBUG,
+        S_DEBUG,
         INFO,
         WARNING,
         ERROR,
@@ -124,7 +124,7 @@ private:
     static std::string ToString(Severity severity)
     {
         switch (severity) {
-        case Severity::DEBUG:
+        case Severity::S_DEBUG:
             return "DEBUG";
         case Severity::INFO:
             return "INFO";

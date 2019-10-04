@@ -14,7 +14,11 @@ The main differences to SerialFiller are:
 - Removal of Logger (temporarily)
 - Added multi-packet test
 
+# Setup
 
+For fully compliant C++11 compilers/OS's nothing further is needed. When used with a RTOS a minimal implementation is needed to fulfil the abstraction of a mutex, conditional_variable etc.. Refer to the file
+
+`esf_abstraction.h` and `esf_embos_abstraction.h/c` for an implementation for Segger's embOS RTOS. In this case an additional definition is needed to select the correct implementation, e.g. `PROFILE_EMBOS`.
 
 Building/Installing
 ===================
@@ -33,6 +37,6 @@ Manual
     ~/EmbeddedSerialFiller$ cd build
     ~/EmbeddedSerialFiller/build$ cmake ..
     ~/EmbeddedSerialFiller/build$ make
-Run the unit tests from `~/EmbeddedSerialFiller/build/test$` with `./SerialFillerTest`
+Run the unit tests from `~/EmbeddedSerialFiller/build/test$` with `./EmbeddedSerialFillerTests`
 
 Tests passing on Linux & Windows.

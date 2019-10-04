@@ -10,3 +10,13 @@ cmake-build-debug/
 # Qt project files
 *.pro
 *.user
+
+# More build dirs
+Debug
+Release
+
+# IAR Workbench related
+settings
+*.dep
+*.ewd
+*.ewt

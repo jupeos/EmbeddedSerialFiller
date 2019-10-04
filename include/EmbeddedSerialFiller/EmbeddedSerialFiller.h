@@ -8,16 +8,16 @@
 #define ESF_EMBEDDED_SERIAL_FILLER_H
 
 #include "EmbeddedSerialFiller/Definitions.h"
+#include "esf_abstraction.h"
 #include "EmbeddedSerialFiller/Logger.h"
 #include <chrono>
-#include <condition_variable>
 #include <cstdint>
 #include <etl/delegate.h>
 #include <iostream>
 
 namespace esf {
 
-using EventType = std::pair<std::condition_variable, bool>;
+using EventType = std::pair<ESF_CONDITION_VARIABLE, bool>;
 
 /// \brief      This EmbeddedSerialFiller class represents a single serial node.
 /// \details
@@ -111,7 +111,7 @@ private:
 
     /// \brief      Mutex that provides thread safety for the EmbeddedSerialFiller class.
     /// \details    Only used if thread safety is enabled via SetThreadSafetyEnabled().
-    std::mutex classMutex_;
+    ESF_MUTEX classMutex_;
 
     bool threadSafetyEnabled_;
 

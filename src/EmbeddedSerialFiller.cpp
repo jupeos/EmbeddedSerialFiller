@@ -18,7 +18,7 @@ EmbeddedSerialFiller::EmbeddedSerialFiller()
 
 void EmbeddedSerialFiller::Publish(const Topic& topic, const ByteArray& data)
 {
-    std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
+    ESF_LOCK lock(classMutex_, ESF_DEFER_LOCK);
     if (threadSafetyEnabled_)
         lock.lock();
 
@@ -29,7 +29,7 @@ bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data
 {
     LOG((*logger_), DEBUG, "PublishWait called. nextPacketId_=" + std::to_string(nextPacketId_));
 
-    std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
+    ESF_LOCK lock(classMutex_, ESF_DEFER_LOCK);
     if (threadSafetyEnabled_)
         lock.lock();
 
@@ -48,7 +48,7 @@ bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data
     PublishInternal(PacketType::PUBLISH, nextPacketId_, &topic, &data);
 
     bool gotAck = false;
-    if (ackEvent.eventType->first.wait_for(lock, timeout) == std::cv_status::no_timeout) {
+    if (ackEvent.eventType->first.wait_for(lock, timeout) == ESF_NO_TIMEOUT) {
         for (auto it = ackEvents_.begin(); it != ackEvents_.end(); ++it) {
             if (it->ID == packetId) {
                 gotAck = it->eventType->second;
@@ -66,7 +66,7 @@ bool EmbeddedSerialFiller::PublishWait(const Topic& topic, const ByteArray& data
 uint32_t EmbeddedSerialFiller::Subscribe(const Topic& topic, etl::delegate<void(ByteArray&)> callback)
 {
     LOG((*logger_), DEBUG, std::string() + "Method called.");
-    std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
+    ESF_LOCK lock(classMutex_, ESF_DEFER_LOCK);
     if (threadSafetyEnabled_)
         lock.lock();
 
@@ -94,7 +94,7 @@ uint32_t EmbeddedSerialFiller::Subscribe(const Topic& topic, etl::delegate<void(
 StatusCode EmbeddedSerialFiller::Unsubscribe(uint32_t subscriberId)
 {
     auto                         retVal = StatusCode::ERROR_UNRECOGNISED_SUBSCRIBER;
-    std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
+    ESF_LOCK lock(classMutex_, ESF_DEFER_LOCK);
     if (threadSafetyEnabled_)
         lock.lock();
 
@@ -116,7 +116,7 @@ StatusCode EmbeddedSerialFiller::Unsubscribe(uint32_t subscriberId)
 
 void EmbeddedSerialFiller::UnsubscribeAll()
 {
-    std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
+    ESF_LOCK lock(classMutex_, ESF_DEFER_LOCK);
     if (threadSafetyEnabled_)
         lock.lock();
 
@@ -126,7 +126,7 @@ void EmbeddedSerialFiller::UnsubscribeAll()
 StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
 {
     StatusCode result = StatusCode::SUCCESS LOG((*logger_), DEBUG, std::string() + "Method called with rxData = " + mn::CppUtils::String::ToHex(rxData));
-    std::unique_lock<std::mutex>            lock(classMutex_, std::defer_lock);
+    ESF_LOCK lock(classMutex_, ESF_DEFER_LOCK);
 
     if (threadSafetyEnabled_) {
         LOG((*logger_), DEBUG, "Locking mutex...");
@@ -240,7 +240,7 @@ StatusCode EmbeddedSerialFiller::GiveRxData(ByteArray& rxData)
 
 uint32_t EmbeddedSerialFiller::NumThreadsWaiting()
 {
-    std::unique_lock<std::mutex> lock(classMutex_, std::defer_lock);
+    ESF_LOCK lock(classMutex_, ESF_DEFER_LOCK);
     if (threadSafetyEnabled_)
         lock.lock();
 
