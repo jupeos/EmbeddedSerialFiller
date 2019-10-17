@@ -32,6 +32,8 @@ SOFTWARE.
 #include "esf_full_std_support.h"
 #elif defined(PROFILE_EMBOS)
 #include "esf_embos_abstraction.h"
+#elif defined(PROFILE_FREERTOS)
+#include "esf_freertos_abstraction.h"
 #elif defined(PROFILE_OTHER_OS)
 #include "esf_other_os_abstraction.h"
 #else
