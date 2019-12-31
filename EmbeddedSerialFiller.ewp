@@ -66,7 +66,7 @@
                 </option>
                 <option>
                     <name>OGLastSavedByProductVersion</name>
-                    <state>8.40.1.21529</state>
+                    <state>8.40.2.22864</state>
                 </option>
                 <option>
                     <name>GeneralEnableMisra</name>
@@ -224,8 +224,9 @@
                 </option>
                 <option>
                     <name>CCDefines</name>
+                    <state>OS_DEBUG=1</state>
                     <state>__STDC_LIMIT_MACROS</state>
-                    <state>PROFILE_ARM_V6_GENERIC</state>
+                    <state>PROFILE_IAR_ARM</state>
                     <state>PROFILE_EMBOS</state>
                 </option>
                 <option>
@@ -682,7 +683,7 @@
             <name>BUILDACTION</name>
             <archiveVersion>1</archiveVersion>
             <data>
-                <prebuild></prebuild>
+                <prebuild>$PROJ_DIR$\Beautifier.bat "$PROJ_DIR$"</prebuild>
                 <postbuild></postbuild>
             </data>
         </settings>
@@ -2145,6 +2146,9 @@
         </file>
         <file>
             <name>$PROJ_DIR$\include\esf_abstraction.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\include\esf_embos_abstraction.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\include\etl_profile.h</name>

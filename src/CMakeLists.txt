@@ -1,10 +1,20 @@
 
 
-file(GLOB_RECURSE embedded-serial-filler_SRC
-        "*.cpp")
+file(GLOB_RECURSE embedded-serial-filler_SRC "*.cpp")
 
-file(GLOB_RECURSE embedded-serial-filler_HEADERS
-        "${CMAKE_SOURCE_DIR}/include/*.h")
+if(ETL_PROFILE MATCHES "PROFILE_EMBOS")
+	message("ETL_PROFILE detected to be PROFILE_EMBOS")
+	list(REMOVE_ITEM embedded-serial-filler_SRC ${CMAKE_CURRENT_SOURCE_DIR}/esf_freertos_abstraction.cpp)
+elseif(ETL_PROFILE MATCHES "PROFILE_FREERTOS")
+	message("ETL_PROFILE detected to be PROFILE_EMBOS")
+	list(REMOVE_ITEM embedded-serial-filler_SRC ${CMAKE_CURRENT_SOURCE_DIR}/esf_embos_abstraction.cpp)
+else ()
+	list(REMOVE_ITEM embedded-serial-filler_SRC ${CMAKE_CURRENT_SOURCE_DIR}/esf_embos_abstraction.cpp)
+	list(REMOVE_ITEM embedded-serial-filler_SRC ${CMAKE_CURRENT_SOURCE_DIR}/esf_freertos_abstraction.cpp)
+	message(${embedded-serial-filler_SRC})
+endif ()
+
+file(GLOB_RECURSE embedded-serial-filler_HEADERS "${CMAKE_SOURCE_DIR}/include/*.h")
 
 add_library(EmbeddedSerialFiller ${embedded-serial-filler_SRC} ${embedded-serial-filler_HEADERS})
 

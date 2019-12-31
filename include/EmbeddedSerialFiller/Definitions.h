@@ -15,13 +15,23 @@
 #define MAX_SUBSCRIBERS 8
 #define MAX_PENDING_ACKS 8
 
-namespace esf {
-
+namespace esf
+{
 using ByteArray = etl::vector<uint8_t, MAX_PACKET_SIZE>;
 using ByteQueue = ByteArray;
-using Topic     = etl::string<MAX_TOPIC_LENGTH>;
-enum class StatusCode { SUCCESS, ERROR_CRC_CHECK_FAILED, ERROR_NOT_ENOUGH_BYTES, ERROR_UNRECOGNISED_PACKET_TYPE, ERROR_UNEXPECTED_ACK, ERROR_LENGTH_OF_TOPIC_TOO_LONG, ERROR_UNRECOGNISED_SUBSCRIBER, ERROR_ZERO_BYTE_NOT_EXPECTED };
+using Topic = etl::string<MAX_TOPIC_LENGTH>;
+enum class StatusCode
+{
+    SUCCESS,
+    ERROR_CRC_CHECK_FAILED,
+    ERROR_NOT_ENOUGH_BYTES,
+    ERROR_UNRECOGNISED_PACKET_TYPE,
+    ERROR_UNEXPECTED_ACK,
+    ERROR_LENGTH_OF_TOPIC_TOO_LONG,
+    ERROR_UNRECOGNISED_SUBSCRIBER,
+    ERROR_ZERO_BYTE_NOT_EXPECTED
+};
 
-} // namespace esf
+}  // namespace esf
 
-#endif // #ifndef ESF_DEFINITIONS_H
+#endif  // #ifndef ESF_DEFINITIONS_H

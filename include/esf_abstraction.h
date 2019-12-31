@@ -28,16 +28,19 @@ SOFTWARE.
 #ifndef __ESF_ABSTRACTION_H__
 #define __ESF_ABSTRACTION_H__
 
-#if defined(PROFILE_MSVC) || defined(PROFILE_GCC_LINUX_X86)
+#if defined( PROFILE_WINDOWS ) || defined( PROFILE_GCC_LINUX_X86 )
 #include "esf_full_std_support.h"
-#elif defined(PROFILE_EMBOS)
+#pragma message( "OS Profile: PROFILE_WINDOWS or PROFILE_LINUX" )
+#elif defined( PROFILE_EMBOS )
+#pragma message( "OS Profile: PROFILE_EMBOS" )
 #include "esf_embos_abstraction.h"
-#elif defined(PROFILE_FREERTOS)
+#elif defined( PROFILE_FREERTOS )
+#pragma message( "OS Profile: PROFILE_FREERTOS" )
 #include "esf_freertos_abstraction.h"
-#elif defined(PROFILE_OTHER_OS)
+#elif defined( PROFILE_OTHER_OS )
 #include "esf_other_os_abstraction.h"
 #else
 #error Must provide an implementation for various OS specific abstratctions e.g. mutex, condition_variable etc..
 #endif
 
-#endif // __ESF_ABSTRACTION_H__
+#endif  // __ESF_ABSTRACTION_H__

@@ -7,60 +7,57 @@
 #ifndef ESF_EMBEDDED_SERIAL_FILLER_H
 #define ESF_EMBEDDED_SERIAL_FILLER_H
 
-#include "EmbeddedSerialFiller/Definitions.h"
-#include "esf_abstraction.h"
-#include "EmbeddedSerialFiller/Logger.h"
+#include <etl/delegate.h>
 #include <chrono>
 #include <cstdint>
-#include <etl/delegate.h>
 #include <iostream>
+#include "EmbeddedSerialFiller/Definitions.h"
+#include "EmbeddedSerialFiller/Logger.h"
+#include "esf_abstraction.h"
 
-namespace esf {
-
-using EventType = std::pair<ESF_CONDITION_VARIABLE, bool>;
-
-/// \brief      This EmbeddedSerialFiller class represents a single serial node.
+namespace esf
+{
+/// \brief This EmbeddedSerialFiller class represents a single serial node.
 /// \details
-/// PACKET STRUCTURE:
-/// Format, pre COBS encoded:
+/// Packet format, pre COBS encoded:
 /// [ <packet type>, <packet type dependent data...> ]
-/// Packet Type: 1 = publish, 2 = ack
-/// Publish packet structure:
-/// [ 0x01, <packet ID>, <length of topic id>, <topic ID 1>, ..., <topic ID n>, <data 1>, ... , <data n>, <CRC MSB>, <CRC LSB> ]
-/// Ack Packet Structure:
+///
+/// Broadcast/Publish packet structure:
+/// [ 0x01/0x04, <packet ID>, <length of topic id>, <topic ID 1>, ..., <topic ID n>, <data 1>, ... , <data n>, <CRC MSB>, <CRC LSB> ]
+/// Acknowledge packet Structure:
 /// [ 0x02, <packet ID>, <CRC MSB>, <CRC LSB> ]
+///
 /// This is then COBS encoded, which frames the end-of-packet with a unique 0x00 byte,
 /// and escapes all pre-existing 0x00's present in packet.
 class EmbeddedSerialFiller
 {
-public:
-    /// \brief      Enumerates the available EmbeddedSerialFiller packet types.
-    enum class PacketType : uint8_t {
-        BROADCAST = 0x01,
-        ACK       = 0x02,
-        PUBLISH   = 0x04,
+   public:
+    /// \brief Enumerates the available EmbeddedSerialFiller packet types.
+    enum class PacketType : uint8_t
+    {
+        BROADCAST = 0x01, /* No response expected */
+        ACK = 0x02,       /* Acknowledge */
+        PUBLISH = 0x04,   /* Expects an ACK response */
     };
 
     /// \brief      Basic constructor.
     EmbeddedSerialFiller();
 
     /// \brief      Publishes data on a topic, and then immediately returns. Does not block (see PublishWait()).
-    void Publish(const Topic& topic, const ByteArray& data);
+    uint8_t Publish( const Topic& topic, const ByteArray& data );
 
     /// \brief      Publishes data on a topic, and then blocks the calling thread until either an acknowledge
     ///             is received, or a timeout occurs.
     /// \returns    True if an acknowledge was received before the timeout occurred, otherwise false.
-    /// \warning    Ack must enabled via SetAckEnabled() before this will block. If ACK is not enabled,
-    ///             this method will return true immediately without waiting.
-    bool PublishWait(const Topic& topic, const ByteArray& data, std::chrono::milliseconds timeout);
+    bool PublishWait( const Topic& topic, const ByteArray& data, std::chrono::milliseconds timeout );
 
     /// \brief      Call to subscribe to a particular topic.
     /// \returns    A unique subscription ID which can be used to delete the subsriber.
-    uint32_t Subscribe(const Topic& topic, etl::delegate<void(ByteArray&)> callback);
+    uint32_t Subscribe( const Topic& topic, etl::delegate<void( ByteArray& )> callback );
 
     /// \brief      Unsubscribes a subscriber using the provided ID.
     /// \details    ID is returned from #Subscribe() method.
-    StatusCode Unsubscribe(uint32_t subscriberId);
+    StatusCode Unsubscribe( uint32_t subscriberId );
 
     /// \brief      Unsubscribes all subscribers.
     void UnsubscribeAll();
@@ -69,67 +66,74 @@ public:
     /// \details    EmbeddedSerialFiller will add this data to it's internal RX data buffer, and then
     ///             attempt to find and extract valid packets. If EmbeddedSerialFiller finds valid packets,
     ///             it will then call all callbacks associated with that topic.
-    StatusCode GiveRxData(ByteArray& rxData);
+    StatusCode GiveRxData( ByteArray& rxData );
 
     /// \brief      Use to enable/disable thread safety (enabled by default). Enabling thread safety makes all EmbeddedSerialFiller API
     ///             methods take out a lock on enter, and release on exit. PublishWait() releases lock when it blocks (so
     ///             PublishWait() can be called multiple times from different threads).
-    void SetThreadSafetyEnabled(bool value);
+    void SetThreadSafetyEnabled( bool value );
 
     /// \brief      Call to find out how many threads are currently waiting on ACKs for this node.
     uint32_t NumThreadsWaiting();
 
     /// \brief      This is called by EmbeddedSerialFiller whenever it has data that is ready
     ///             to be sent out of the serial port.
-    etl::delegate<void(const ByteArray&)> txDataReady_;
+    etl::delegate<void( const ByteArray& )> txDataReady_;
 
-    /// \brief      This event is fired whenever a valid message is received, but
+    /// \brief      This is called whenever a valid message is received, but
     ///             there are no subscribers listening to it.
-    etl::delegate<void(const Topic& topic, const ByteArray& data)> noSubscribersForTopic_;
+    etl::delegate<void( const Topic& topic, const ByteArray& data )> noSubscribersForTopic_;
 
-private:
+    uint8_t NextPacketID() { return nextPacketId_; }
+   private:
     /// \brief      Stores received data until a packet EOF is received, at which point the packet is
     ///             processed.
     ByteArray rxBuffer_;
 
     struct Subscriber
     {
-        uint32_t                        id_;
-        etl::delegate<void(ByteArray&)> callback_;
+        uint32_t id_;
+        etl::delegate<void( ByteArray& )> callback_;
     };
 
     struct SubscriberType
     {
-        Topic                                    topic;
+        Topic topic;
         etl::vector<Subscriber, MAX_SUBSCRIBERS> subscribers;
     };
     typedef etl::vector<SubscriberType, MAX_SUBSCRIBERS> SubscriberList;
-    SubscriberList                                       subscribers_;
+    SubscriberList subscribers_;
 
     /// \brief      Stores what the next sent packet ID should be.
     uint8_t nextPacketId_;
 
     /// \brief      Mutex that provides thread safety for the EmbeddedSerialFiller class.
     /// \details    Only used if thread safety is enabled via SetThreadSafetyEnabled().
-    ESF_MUTEX classMutex_;
+    static ESF_MUTEX classMutex_;
 
     bool threadSafetyEnabled_;
 
-    struct AckEvents
+    struct AckEvent
     {
-        uint8_t                    ID;
-        std::shared_ptr<EventType> eventType;
+        AckEvent() : packetId( 0 )
+        {
+        }
+        uint8_t packetId;
+        ESF_CONDITION_VARIABLE cv;
     };
 
-    etl::vector<AckEvents, MAX_PENDING_ACKS> ackEvents_;
+    etl::vector<AckEvent*, MAX_PENDING_ACKS> ackEvents_;
+    AckEvent events[ MAX_PENDING_ACKS ];
+
+    int32_t maxAckPacketIndex;
 
     /// \brief      Holds the value of the next ID that will be assigned when Subscribe() is called.
     uint32_t nextFreeSubsriberId_;
 
     /// \brief      Internal publish method which does not lock the classMutex_.
-    void PublishInternal(const PacketType& packetType, uint8_t& packetId, const Topic* topic = nullptr, const ByteArray* data = nullptr);
+    uint8_t PublishInternal( const PacketType& packetType, uint8_t& packetId, const Topic* topic = nullptr, const ByteArray* data = nullptr );
 };
 
-} // namespace esf
+}  // namespace esf
 
-#endif // #ifndef ESF_EMBEDDED_SERIAL_FILLER_H
+#endif  // #ifndef ESF_EMBEDDED_SERIAL_FILLER_H
