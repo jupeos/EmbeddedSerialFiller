@@ -61,10 +61,8 @@ bool EmbeddedSerialFiller::PublishWait( const Topic& topic, const ByteArray& dat
 
             // Call the standard publish
             PublishInternal( PacketType::PUBLISH, nextPacketId_, &topic, &data );
-
             gotAck = ( ackEvent.cv.wait_for( lock, timeout ) == ESF_NO_TIMEOUT );
 
-            //bool found = false;
             for( auto it = ackEvents_.begin(); it != ackEvents_.end(); ++it )
             {
                 if( ( *it )->packetId == packetId )
@@ -74,15 +72,9 @@ bool EmbeddedSerialFiller::PublishWait( const Topic& topic, const ByteArray& dat
                     ( *it )->packetId = 0;
                     *it = 0;
                     ackEvents_.erase( it );
-                    //found = true;
                     break;
                 }
             }
-
-            //if( found == false )
-            //{
-            //    printf( "!!!  Failed2 to find packet[%d]!!!\r\n", packetId );
-            //}
         }
         else
         {

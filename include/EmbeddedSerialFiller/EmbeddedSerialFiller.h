@@ -35,6 +35,7 @@ class EmbeddedSerialFiller
     /// \brief Enumerates the available EmbeddedSerialFiller packet types.
     enum class PacketType : uint8_t
     {
+        UNKNOWN = 0x0,
         BROADCAST = 0x01, /* No response expected */
         ACK = 0x02,       /* Acknowledge */
         PUBLISH = 0x04,   /* Expects an ACK response */
