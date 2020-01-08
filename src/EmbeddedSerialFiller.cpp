@@ -30,11 +30,11 @@ uint8_t EmbeddedSerialFiller::Publish( const Topic& topic, const ByteArray& data
 bool EmbeddedSerialFiller::PublishWait( const Topic& topic, const ByteArray& data, std::chrono::milliseconds timeout )
 {
     LOG( ( *logger_ ), DEBUG, "PublishWait called. nextPacketId_=" + std::to_string( nextPacketId_ ) );
-    bool gotAck = false;
     ESF_LOCK lock( classMutex_, ESF_DEFER_LOCK );
     if( threadSafetyEnabled_ )
         lock.lock();
 
+    bool gotAck = false;
     // Take a copy since PublishInternal updates the value of nextPacketId_.
     auto packetId = nextPacketId_;
     if( ackEvents_.full() == false )
@@ -224,19 +224,18 @@ StatusCode EmbeddedSerialFiller::GiveRxData( ByteArray& rxData )
                         if( it == subscribers_.end() )
                         {
                             // If no subscribers are listening to this topic,
-                            // fire the "no subscribers for topic" event (user can
-                            // listen to this)
-                            if( threadSafetyEnabled_ )
-                            {
-                                lock.unlock();
-                            }
+                            // notify clients using the "no subscribers for topic" callback.
                             if( noSubscribersForTopic_ )
                             {
+                                if( threadSafetyEnabled_ )
+                                {
+                                    lock.unlock();
+                                }
                                 noSubscribersForTopic_( topic, data );
-                            }
-                            if( threadSafetyEnabled_ )
-                            {
-                                lock.lock();
+                                if( threadSafetyEnabled_ )
+                                {
+                                    lock.lock();
+                                }
                             }
                         }
                         else
@@ -350,7 +349,9 @@ uint8_t EmbeddedSerialFiller::PublishInternal( const PacketType& packetType, uin
         }
         break;
         case PacketType::ACK:
+            break;
         default:
+            printf( "!!!  Unrecognised packet type !!!\r\n" );
             break;
     }
 
