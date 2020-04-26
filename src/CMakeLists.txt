@@ -2,6 +2,9 @@
 
 file(GLOB_RECURSE embedded-serial-filler_SRC "*.cpp")
 
+list(REMOVE_ITEM embedded-serial-filler_SRC ${CMAKE_CURRENT_SOURCE_DIR}/EmbeddedSerialFiller_NoRTOS.cpp)
+list(REMOVE_ITEM embedded-serial-filler_SRC ${CMAKE_CURRENT_SOURCE_DIR}/EmbeddedSerialFiller_RTOS.cpp)
+
 if(ETL_PROFILE MATCHES "PROFILE_EMBOS")
 	message("ETL_PROFILE detected to be PROFILE_EMBOS")
 	list(REMOVE_ITEM embedded-serial-filler_SRC ${CMAKE_CURRENT_SOURCE_DIR}/esf_freertos_abstraction.cpp)

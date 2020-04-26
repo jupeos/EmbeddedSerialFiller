@@ -15,6 +15,13 @@
 #define MAX_SUBSCRIBERS 8
 #define MAX_PENDING_ACKS 8
 
+#if defined( PROFILE_NO_RTOS )
+#define ESF_MINIMAL_IMPLEMENTATION
+#else
+// Uncomment to reduce the footprint.
+//#define ESF_MINIMAL_IMPLEMENTATION
+#endif
+
 namespace esf
 {
 using ByteArray = etl::vector<uint8_t, MAX_PACKET_SIZE>;

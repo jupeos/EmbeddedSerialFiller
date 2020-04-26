@@ -8,11 +8,7 @@
 #define __ESF_EMBOS_ABSTRACTION_H__
 
 #include <chrono>
-#include "..\..\Segger_Libs\Start\Inc\RTOS.h"
-
-#if( OS_DEBUG != 0 )
-#pragma message( "Defined OS_DEBUG != 0" )
-#endif
+#include "RTOS.h"
 
 // A bare minimum implementation to support a mutex, lock & condition variable
 // using suitable embOS equivalents.

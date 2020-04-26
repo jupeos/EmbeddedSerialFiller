@@ -1,3 +1,0 @@
-cmake -H. -Bbuild -G "NMake Makefiles" -DCMAKE_TOOLCHAIN_FILE=toolchain-ewarm.cmake
-
-cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain-ewarm.cmake -DCMAKE_BUILD_TYPE=Debug  -DCMAKE_CXX_FLAGS:="-DPROFILE_EMBOS" .. -G "NMake Makefiles"

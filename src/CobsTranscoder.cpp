@@ -6,7 +6,6 @@
 
 #include "EmbeddedSerialFiller/CobsTranscoder.h"
 #include <iostream>
-#include "EmbeddedSerialFiller/Logger.h"
 
 namespace esf
 {

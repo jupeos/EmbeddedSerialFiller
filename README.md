@@ -1,6 +1,6 @@
 
 
-# EmbeddedSerialFiller
+# [EmbeddedSerialFiller](https://github.com/jupeos/EmbeddedSerialFiller#embeddedserialfiller)
 
 Combining the [ETL](https://github.com/ETLCPP/etl) with [SerialFiller](https://github.com/gbmhunter/SerialFiller) intended for small footprint embedded systems.
 
@@ -16,9 +16,11 @@ The main differences to SerialFiller are:
 
 # Setup
 
-For fully compliant C++11 compilers/OS's nothing further is needed. When used with a RTOS a minimal implementation is needed to fulfil the abstraction of a mutex, conditional_variable etc.. Refer to the file
+For fully compliant C++11 compilers/OS's nothing further is needed.
 
-`esf_abstraction.h` and `esf_embos_abstraction.h/c` for an implementation for Segger's embOS RTOS. In this case an additional definition is needed to select the correct implementation, e.g. `PROFILE_EMBOS`.
+When used with a RTOS a minimal implementation is needed to fulfil the abstraction of a mutex, conditional_variable etc.. Refer to the file `esf_abstraction.h` and `esf_freertos_abstraction.h/c` for an implementation for [FreeRTOS](https://www.freertos.org/). A similar implementation exists for Segger's embOS RTOS in `esf_embos_abstraction.h/c`. In this case an additional definition is needed to select the correct implementation, e.g. `PROFILE_FREERTOS` or `PROFILE_EMBOS`.
+
+[ESF](https://github.com/jupeos/EmbeddedSerialFiller) provides an implementation for no RTOS targets. The expectation is some form of time driven architecture where periodic calls to `PublishWait` drive the 'wait' timeout. Refer to the header file `EmbeddedSerialFiller_NoRTOS.h` for more information.
 
 Building/Installing
 ===================
@@ -28,15 +30,38 @@ Clone this repository (`git clone https://github.com/jupeos/EmbeddedSerialFiller
 Use The Script
 --------------
 
+*Note: Git must be installed in order to build the tests.*
+
     NOT IMPLEMENTED
 
 Manual
 ------
 
+### Linux
+
     ~/EmbeddedSerialFiller$ mkdir build
     ~/EmbeddedSerialFiller$ cd build
     ~/EmbeddedSerialFiller/build$ cmake ..
     ~/EmbeddedSerialFiller/build$ make
+To include the tests use `cmake -DBUILD_TESTS=ON ..`
+
+### Windows
+
+```
+~/EmbeddedSerialFiller$ mkdir build
+~/EmbeddedSerialFiller$ cd build
+~/EmbeddedSerialFiller/build$ cmake .. -G "NMake Makefiles"
+~/EmbeddedSerialFiller/build$ nmake
+```
+
+To include the test use `cmake -DBUILD_TESTS=ON .. -G "NMake Makefiles"`
+
+---
+
+### Testing
+
 Run the unit tests from `~/EmbeddedSerialFiller/build/test$` with `./EmbeddedSerialFillerTests`
 
-Tests passing on Linux & Windows.
+No tests exist for the NoRTOS profile as yet.
+
+Tests passing on Linux & probably? on Windows.

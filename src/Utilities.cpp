@@ -7,7 +7,6 @@
 #include "EmbeddedSerialFiller/Utilities.h"
 #include <etl/crc16_ccitt.h>
 #include <iostream>
-#include "EmbeddedSerialFiller/Logger.h"
 
 namespace esf
 {

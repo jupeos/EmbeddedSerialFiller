@@ -1046,7 +1046,7 @@
                 </option>
                 <option>
                     <name>IarchiveOutput</name>
-                    <state>D:\Sources\Cutera\NXP\EmbeddedSerialFiller\Debug\Exe\EmbeddedSerialFiller.a</state>
+                    <state></state>
                 </option>
             </data>
         </settings>
@@ -2106,7 +2106,7 @@
                 </option>
                 <option>
                     <name>IarchiveOutput</name>
-                    <state>D:\Sources\Cutera\NXP\EmbeddedSerialFiller\Release\Exe\EmbeddedSerialFiller.a</state>
+                    <state></state>
                 </option>
             </data>
         </settings>
@@ -2142,16 +2142,19 @@
             </file>
         </group>
         <file>
-            <name>$PROJ_DIR$\include\armv6.h</name>
-        </file>
-        <file>
             <name>$PROJ_DIR$\include\esf_abstraction.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\include\esf_embos_abstraction.h</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\include\esf_other_os_abstraction.h</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\include\etl_profile.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\include\IAR_armv6.h</name>
         </file>
     </group>
     <group>

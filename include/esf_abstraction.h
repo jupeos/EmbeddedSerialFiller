@@ -30,15 +30,17 @@ SOFTWARE.
 
 #if defined( PROFILE_WINDOWS ) || defined( PROFILE_GCC_LINUX_X86 )
 #include "esf_full_std_support.h"
-#pragma message( "OS Profile: PROFILE_WINDOWS or PROFILE_LINUX" )
+//#pragma message( "OS Profile: PROFILE_WINDOWS or PROFILE_LINUX" )
 #elif defined( PROFILE_EMBOS )
-#pragma message( "OS Profile: PROFILE_EMBOS" )
+//#pragma message( "OS Profile: PROFILE_EMBOS" )
 #include "esf_embos_abstraction.h"
 #elif defined( PROFILE_FREERTOS )
-#pragma message( "OS Profile: PROFILE_FREERTOS" )
+//#pragma message( "OS Profile: PROFILE_FREERTOS" )
 #include "esf_freertos_abstraction.h"
 #elif defined( PROFILE_OTHER_OS )
 #include "esf_other_os_abstraction.h"
+#elif defined( PROFILE_NO_RTOS )
+#include "esf_no_rtos_abstraction.h"
 #else
 #error Must provide an implementation for various OS specific abstratctions e.g. mutex, condition_variable etc..
 #endif

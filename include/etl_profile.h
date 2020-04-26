@@ -46,10 +46,6 @@ SOFTWARE.
 #elif defined( PROFILE_ARMV6 )
 #include "armv6.h"
 #elif defined( PROFILE_IAR_ARM )
-#pragma message( "Profile: PROFILE_IAR_ARM" )
-#if defined( __ICCARM__ )
-#pragma message( "Defined __ICCARM__" )
-#endif
 #include "IAR_armv6.h"
 #elif defined( PROFILE_ARDUINO )
 #include "arduino_arm.h"
