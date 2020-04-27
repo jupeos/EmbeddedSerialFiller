@@ -64,4 +64,4 @@ Run the unit tests from `~/EmbeddedSerialFiller/build/test$` with `./EmbeddedSer
 
 No tests exist for the NoRTOS profile as yet.
 
-Tests passing on Linux & probably? on Windows.
+Tests passing on Linux & Windows.
