@@ -40,7 +40,7 @@ SOFTWARE.
 #elif defined( PROFILE_OTHER_OS )
 #include "esf_other_os_abstraction.h"
 #elif defined( PROFILE_NO_RTOS )
-#include "esf_no_rtos_abstraction.h"
+// No header for this.
 #else
 #error Must provide an implementation for various OS specific abstratctions e.g. mutex, condition_variable etc..
 #endif
