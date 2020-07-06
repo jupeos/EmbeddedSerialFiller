@@ -31,23 +31,6 @@ namespace esf
 class EmbeddedSerialFiller
 {
    public:
-    /// \brief Enumerates the available EmbeddedSerialFiller packet types.
-    enum class PacketType : uint8_t
-    {
-        UNKNOWN = 0x0,
-        BROADCAST = 0x01, /* No response expected */
-        ACK = 0x02,       /* Acknowledge */
-        PUBLISH = 0x04,   /* Expects an ACK response */
-    };
-
-    enum class PublishResponse : uint8_t
-    {
-        UNKNOWN,
-        SUCCESS,
-        PENDING,
-        TIMEOUT,
-    };
-
     /// \brief      Basic constructor.
     EmbeddedSerialFiller();
 
@@ -108,9 +91,9 @@ class EmbeddedSerialFiller
     struct SubscriberType
     {
         Topic topic;
-        etl::vector<Subscriber, MAX_SUBSCRIBERS> subscribers;
+        etl::vector<Subscriber, ESF_MAX_SUBSCRIBERS> subscribers;
     };
-    typedef etl::vector<SubscriberType, MAX_SUBSCRIBERS> SubscriberList;
+    typedef etl::vector<SubscriberType, ESF_MAX_SUBSCRIBERS> SubscriberList;
     SubscriberList subscribers_;
 
     /// \brief      Stores what the next sent packet ID should be.
@@ -131,8 +114,8 @@ class EmbeddedSerialFiller
         ESF_CONDITION_VARIABLE cv;
     };
 
-    etl::vector<AckEvent*, MAX_PENDING_ACKS> ackEvents_;
-    AckEvent events[ MAX_PENDING_ACKS ];
+    etl::vector<AckEvent*, ESF_MAX_PENDING_ACKS> ackEvents_;
+    AckEvent events[ ESF_MAX_PENDING_ACKS ];
 
     int32_t maxAckPacketIndex;
 

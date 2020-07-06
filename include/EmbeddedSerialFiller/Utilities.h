@@ -20,7 +20,7 @@ class Utilities
     /// \details    Moves new RX data into the RX buffer, while looking for the
     ///             end-of-frame character. If EOF is found, packet is populated
     ///             and this method returns.
-    static void MoveRxDataInBuffer( ByteArray& newRxData, ByteArray& rxDataBuffer, ByteArray& packet );
+    static StatusCode MoveRxDataInBuffer( ByteArray& newRxData, ByteArray& rxDataBuffer, ByteArray& packet );
 
     static void AddCrc( ByteArray& packet );
 
@@ -28,7 +28,7 @@ class Utilities
     ///                 last two bytes to be the CRC value of all the bytes proceeding it.
     static StatusCode VerifyCrc( const ByteArray& packet );
 
-   private:
+    static const char* StatusCodeToString( StatusCode statusCode );
 };
 
 }  // namespace esf

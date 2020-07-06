@@ -10,10 +10,20 @@
 #include <etl/cstring.h>
 #include <etl/vector.h>
 
-#define MAX_PACKET_SIZE 1024
-#define MAX_TOPIC_LENGTH 16
-#define MAX_SUBSCRIBERS 8
-#define MAX_PENDING_ACKS 8
+#ifndef ESF_MAX_PACKET_SIZE
+#define ESF_MAX_PACKET_SIZE 1024
+#endif
+#ifndef ESF_MAX_TOPIC_LENGTH
+#define ESF_MAX_TOPIC_LENGTH 16
+#endif
+#ifndef ESF_MAX_SUBSCRIBERS
+#define ESF_MAX_SUBSCRIBERS 8
+#endif
+#ifndef ESF_MAX_PENDING_ACKS
+#define ESF_MAX_PENDING_ACKS 8
+#endif
+
+#define ESF_OPTIMISE  // Optimisation is on by default.
 
 #if defined( PROFILE_NO_RTOS )
 #define ESF_MINIMAL_IMPLEMENTATION
@@ -24,10 +34,39 @@
 
 namespace esf
 {
-using ByteArray = etl::vector<uint8_t, MAX_PACKET_SIZE>;
+using ByteArray = etl::vector<uint8_t, ESF_MAX_PACKET_SIZE>;
 using ByteQueue = ByteArray;
-using Topic = etl::string<MAX_TOPIC_LENGTH>;
-enum class StatusCode
+using Topic = etl::string<ESF_MAX_TOPIC_LENGTH>;
+
+/**
+ * \enum PacketType
+ * \brief Enumerates the available EmbeddedSerialFiller packet types.
+ */
+enum class PacketType : uint8_t
+{
+    UNKNOWN = 0x0,
+    BROADCAST = 0x42, /* 'B' No response expected */
+    ACK = 0x41,       /* 'A' Acknowledge */
+    PUBLISH = 0x50,   /* 'P' Expects an ACK response */
+};
+
+/**
+ * \enum PublishResponse
+ * \brief Response codes to a *PublishWait*.
+ */
+enum class PublishResponse : uint8_t
+{
+    UNKNOWN,
+    SUCCESS,
+    PENDING,
+    TIMEOUT,
+};
+
+/**
+ * \enum StatusCode
+ * \brief The result of various functions within the *ESF* library.
+ */
+enum class StatusCode : uint8_t
 {
     SUCCESS,
     ERROR_CRC_CHECK_FAILED,
@@ -36,7 +75,8 @@ enum class StatusCode
     ERROR_UNEXPECTED_ACK,
     ERROR_LENGTH_OF_TOPIC_TOO_LONG,
     ERROR_UNRECOGNISED_SUBSCRIBER,
-    ERROR_ZERO_BYTE_NOT_EXPECTED
+    ERROR_ZERO_BYTE_NOT_EXPECTED,
+    ERROR_RX_DATA_BUFFER_FULL,
 };
 
 }  // namespace esf

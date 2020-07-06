@@ -7,13 +7,13 @@
 #include "EmbeddedSerialFiller/Utilities.h"
 #include <etl/crc16_ccitt.h>
 #include <iostream>
+#include "EmbeddedSerialFiller/Utilities.h"
 
 namespace esf
 {
-void Utilities::MoveRxDataInBuffer( ByteArray& newRxData, ByteArray& rxDataBuffer, ByteArray& packet )
+StatusCode Utilities::MoveRxDataInBuffer( ByteArray& newRxData, ByteArray& rxDataBuffer, ByteArray& packet )
 {
-    //            std::cout << "Move RX data called." << std::endl;
-
+    StatusCode retVal = StatusCode::SUCCESS;
     // Clear any existing data from packet
     packet.clear();
     size_t idx = 0;
@@ -21,51 +21,44 @@ void Utilities::MoveRxDataInBuffer( ByteArray& newRxData, ByteArray& rxDataBuffe
     // Pop bytes from front of queue
     while( idx < newRxData.size() )
     {
-        uint8_t byteOfData = newRxData.at( idx++ );
+        uint8_t byteOfData = newRxData[ idx ];
+        ++idx;
         if( rxDataBuffer.full() )
         {
-            //std::cout << config_TERM_TEXT_COLOUR_RED << "rxDataBuffer is full" << config_TERM_TEXT_FORMAT_NORMAL << std::endl;
+            retVal = StatusCode::ERROR_RX_DATA_BUFFER_FULL;
             break;
         }
-        rxDataBuffer.push_back( byteOfData );
+        rxDataBuffer.emplace_back( byteOfData );
 
         // Look for 0x00 byte in data
         if( byteOfData == 0x00 )
         {
             // Found end-of-packet!
-
-            // Move everything from the start to byteOfData from rxData
-            // into a new packet
-            for( auto it = rxDataBuffer.begin(); it != rxDataBuffer.end(); ++it )
-            {
-                packet.push_back( *it );
-            }
+            // Move everything from the start to byteOfData from rxData into a new packet
+            packet.insert( packet.end(), rxDataBuffer.begin(), rxDataBuffer.end() );
 
             rxDataBuffer.clear();
             newRxData = ByteArray( newRxData.begin() + idx, newRxData.end() );
-            //                    std::cout << "Move RX data returning." << std::endl;
-            return;
+            return retVal;
         }
     }
     newRxData.clear();
-    //            std::cout << "Move RX data returning." << std::endl;
+    return retVal;
 }
 
 void Utilities::AddCrc( ByteArray& packet )
 {
     uint16_t crcVal = etl::crc16_ccitt( packet.begin(), packet.end() );
 
-    // Add CRC value to end of packet, MSB of CRC
-    // comes first
-    packet.push_back( static_cast<uint8_t>( ( crcVal >> 8 ) & 0xFF ) );
-    packet.push_back( static_cast<uint8_t>( ( crcVal >> 0 ) & 0xFF ) );
+    // Add CRC value to end of packet, MSB of CRC comes first
+    packet.emplace_back( static_cast<uint8_t>( ( crcVal >> 8 ) & 0xFF ) );
+    packet.emplace_back( static_cast<uint8_t>( ( crcVal >> 0 ) & 0xFF ) );
 }
 
 StatusCode Utilities::VerifyCrc( const ByteArray& packet )
 {
     if( packet.size() < 3 )
     {
-        //LOG((*logger_), ERROR, "Cannot verify CRC with less than 3 bytes in packet.");
         return StatusCode::ERROR_NOT_ENOUGH_BYTES;
     }
     else
@@ -79,7 +72,6 @@ StatusCode Utilities::VerifyCrc( const ByteArray& packet )
 
         if( sentCrcVal != calcCrcVal )
         {
-            //std::cout << config_TERM_TEXT_COLOUR_RED << "CRC check failed." << config_TERM_TEXT_FORMAT_NORMAL << std::endl;
             return StatusCode::ERROR_CRC_CHECK_FAILED;
         }
     }
@@ -89,29 +81,52 @@ StatusCode Utilities::VerifyCrc( const ByteArray& packet )
 StatusCode Utilities::SplitPacket( const ByteArray& packet, uint32_t startAt, Topic& topic, ByteArray& data )
 {
     // Get length of topic
-    size_t lengthOfTopic = packet.at( startAt );
+    assert( startAt < packet.size() );
+    size_t lengthOfTopic = packet[ startAt ];
 
     size_t availableBytes = packet.size() - 2 - startAt;
     // Verify that length of topic is not longer than total length of packet - 2 bytes for CRC - start position
     if( lengthOfTopic > availableBytes )
     {
-        //std::cout << config_TERM_TEXT_COLOUR_RED << "Length of topic too long." << config_TERM_TEXT_FORMAT_NORMAL << std::endl;
         return StatusCode::ERROR_LENGTH_OF_TOPIC_TOO_LONG;
     }
 
-    auto it1 = packet.begin() + 1 + startAt + lengthOfTopic;
-    auto it2 = packet.end() - 2;
+    auto topicBegin = packet.begin() + 1 + startAt;
+    auto topicEnd = topicBegin + lengthOfTopic;
+    auto dataEnd = packet.end() - 2;
     topic.clear();
-    for( auto it = packet.begin() + 1 + startAt; it != it1; ++it )
-    {
-        topic.push_back( *it );
-    }
+    topic.insert( topic.end(), topicBegin, topicEnd );
+
     data.clear();
-    for( auto it = it1; it != it2; ++it )
-    {
-        data.push_back( *it );
-    }
+    data.insert( data.end(), topicEnd, dataEnd );
     return StatusCode::SUCCESS;
+}
+
+const char* Utilities::StatusCodeToString( StatusCode statusCode )
+{
+    switch( statusCode )
+    {
+        case StatusCode::SUCCESS:
+            return "SUCCESS";
+        case StatusCode::ERROR_CRC_CHECK_FAILED:
+            return "ERROR_CRC_CHECK_FAILED";
+        case StatusCode::ERROR_NOT_ENOUGH_BYTES:
+            return "ERROR_NOT_ENOUGH_BYTES";
+        case StatusCode::ERROR_UNRECOGNISED_PACKET_TYPE:
+            return "ERROR_UNRECOGNISED_PACKET_TYPE";
+        case StatusCode::ERROR_UNEXPECTED_ACK:
+            return "ERROR_UNEXPECTED_ACK";
+        case StatusCode::ERROR_LENGTH_OF_TOPIC_TOO_LONG:
+            return "ERROR_LENGTH_OF_TOPIC_TOO_LONG";
+        case StatusCode::ERROR_UNRECOGNISED_SUBSCRIBER:
+            return "ERROR_UNRECOGNISED_SUBSCRIBER";
+        case StatusCode::ERROR_ZERO_BYTE_NOT_EXPECTED:
+            return "ERROR_ZERO_BYTE_NOT_EXPECTED";
+        case StatusCode::ERROR_RX_DATA_BUFFER_FULL:
+            return "ERROR_RX_DATA_BUFFER_FULL";
+        default:
+            return "UNKNOWN";
+    }
 }
 
 }  // namespace esf

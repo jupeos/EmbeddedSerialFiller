@@ -29,7 +29,7 @@ uint8_t EmbeddedSerialFiller::Publish( const Topic& topic, const ByteArray& data
     return PublishInternal( PacketType::BROADCAST, nextPacketId_, &topic, &data );
 }
 
-EmbeddedSerialFiller::PublishResponse EmbeddedSerialFiller::PublishWait( const Topic& topic, const ByteArray& data, size_t timeout )
+PublishResponse EmbeddedSerialFiller::PublishWait( const Topic& topic, const ByteArray& data, size_t timeout )
 {
     LOG( ( *logger_ ), DEBUG, "PublishWait called. nextPacketId_=" + std::to_string( nextPacketId_ ) );
     ESF_LOCK lock( classMutex_, ESF_DEFER_LOCK );
@@ -43,7 +43,7 @@ EmbeddedSerialFiller::PublishResponse EmbeddedSerialFiller::PublishWait( const T
     {
         // Find first free ackEvent
         uint8_t eventIndex;
-        for( eventIndex = 0; eventIndex < MAX_PENDING_ACKS; ++eventIndex )
+        for( eventIndex = 0; eventIndex < ESF_MAX_PENDING_ACKS; ++eventIndex )
         {
             if( events[ eventIndex ].packetId == 0 )
             {
@@ -54,7 +54,7 @@ EmbeddedSerialFiller::PublishResponse EmbeddedSerialFiller::PublishWait( const T
                 break;
             }
         }
-        if( eventIndex < MAX_PENDING_ACKS )
+        if( eventIndex < ESF_MAX_PENDING_ACKS )
         {
             // Create cv and bool
             AckEvent& ackEvent = events[ eventIndex ];
@@ -87,7 +87,7 @@ EmbeddedSerialFiller::PublishResponse EmbeddedSerialFiller::PublishWait( const T
     else
     {
         printf( "!!!  Run out of AckEvents !!!\r\n" );
-        LOG( ( *logger_ ), ERROR, "PublishWait() ackEvents is full. Increase the size of MAX_PENDING_ACKS." );
+        LOG( ( *logger_ ), ERROR, "PublishWait() ackEvents is full. Increase the size of ESF_MAX_PENDING_ACKS." );
     }
     return gotAck ? PublishResponse::SUCCESS : PublishResponse::TIMEOUT;
 }
