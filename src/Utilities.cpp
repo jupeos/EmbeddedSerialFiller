@@ -4,9 +4,9 @@
  * \date    11 Sep 2019
  */
 
+#include "EmbeddedSerialFiller/Utilities.h"
 #include <etl/crc16_ccitt.h>
 #include <iostream>
-#include "EmbeddedSerialFiller/Utilities.h"
 
 namespace esf
 {
@@ -16,11 +16,13 @@ StatusCode Utilities::MoveRxDataInBuffer( ByteArray& newRxData, ByteArray& rxDat
     // Clear any existing data from packet
     packet.clear();
     size_t idx = 0;
+    const size_t newRxDataSize = newRxData.size();
+    uint8_t* rxBuffer = newRxData.data();
 
     // Pop bytes from front of queue
-    while( idx < newRxData.size() )
+    while( idx < newRxDataSize )
     {
-        uint8_t byteOfData = newRxData[ idx ];
+        uint8_t byteOfData = rxBuffer[ idx ];
         ++idx;
         if( rxDataBuffer.full() )
         {
@@ -35,24 +37,25 @@ StatusCode Utilities::MoveRxDataInBuffer( ByteArray& newRxData, ByteArray& rxDat
             // Found end-of-packet!
             // Move everything from the start to byteOfData from rxData into a new packet
 #if defined( ESF_OPTIMISE )
+            ByteArray::const_iterator iter = rxDataBuffer.begin();
+            ByteArray::const_iterator endIter = rxDataBuffer.end();
+            for( ; iter < endIter; ++iter )
             {
-                // ~5us
-                ByteArray::const_iterator iter = rxDataBuffer.begin();
-                ByteArray::const_iterator endIter = rxDataBuffer.end();
-                for( ; iter < endIter; ++iter )
-                {
-                    packet.emplace_back( *iter );
-                }
+                packet.emplace_back( *iter );
             }
 #else
-            {
-                // ~14us
-                packet.insert( packet.end(), rxDataBuffer.begin(), rxDataBuffer.end() );
-            }
+            packet.insert( packet.end(), rxDataBuffer.begin(), rxDataBuffer.end() );
 #endif
 
             rxDataBuffer.clear();
-            newRxData = ByteArray( newRxData.begin() + idx, newRxData.end() );  // ~10us
+            if( idx == newRxDataSize )
+            {
+                newRxData.clear();
+            }
+            else
+            {
+                newRxData = ByteArray( newRxData.begin() + idx, newRxData.end() );
+            }
             return retVal;
         }
     }
