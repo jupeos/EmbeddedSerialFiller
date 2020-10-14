@@ -79,6 +79,8 @@ enum class StatusCode : uint8_t
     ERROR_RX_DATA_BUFFER_FULL,
 };
 
+#define ESF_MIN_BYTES ( 3 )
+
 }  // namespace esf
 
 #endif  // #ifndef ESF_DEFINITIONS_H

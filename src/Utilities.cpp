@@ -4,7 +4,6 @@
  * \date    11 Sep 2019
  */
 
-#include "EmbeddedSerialFiller/Utilities.h"
 #include <etl/crc16_ccitt.h>
 #include <iostream>
 #include "EmbeddedSerialFiller/Utilities.h"
@@ -35,10 +34,25 @@ StatusCode Utilities::MoveRxDataInBuffer( ByteArray& newRxData, ByteArray& rxDat
         {
             // Found end-of-packet!
             // Move everything from the start to byteOfData from rxData into a new packet
-            packet.insert( packet.end(), rxDataBuffer.begin(), rxDataBuffer.end() );
+#if defined( ESF_OPTIMISE )
+            {
+                // ~5us
+                ByteArray::const_iterator iter = rxDataBuffer.begin();
+                ByteArray::const_iterator endIter = rxDataBuffer.end();
+                for( ; iter < endIter; ++iter )
+                {
+                    packet.emplace_back( *iter );
+                }
+            }
+#else
+            {
+                // ~14us
+                packet.insert( packet.end(), rxDataBuffer.begin(), rxDataBuffer.end() );
+            }
+#endif
 
             rxDataBuffer.clear();
-            newRxData = ByteArray( newRxData.begin() + idx, newRxData.end() );
+            newRxData = ByteArray( newRxData.begin() + idx, newRxData.end() );  // ~10us
             return retVal;
         }
     }
@@ -57,7 +71,7 @@ void Utilities::AddCrc( ByteArray& packet )
 
 StatusCode Utilities::VerifyCrc( const ByteArray& packet )
 {
-    if( packet.size() < 3 )
+    if( packet.size() < ESF_MIN_BYTES )
     {
         return StatusCode::ERROR_NOT_ENOUGH_BYTES;
     }

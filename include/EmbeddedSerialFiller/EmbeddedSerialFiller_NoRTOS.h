@@ -114,8 +114,6 @@ class EmbeddedSerialFiller
     AckEvent ackEvent;
     AckEvent events;
 
-    int32_t maxAckPacketIndex;
-
     /// \brief      Holds the value of the next ID that will be assigned when Subscribe() is called.
     uint32_t nextFreeSubsriberId_;
 

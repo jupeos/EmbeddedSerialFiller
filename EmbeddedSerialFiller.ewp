@@ -2129,13 +2129,19 @@
                 <name>$PROJ_DIR$\include\EmbeddedSerialFiller\CobsTranscoder.h</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\include\EmbeddedSerialFiller\Container.h</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\include\EmbeddedSerialFiller\Definitions.h</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\include\EmbeddedSerialFiller\EmbeddedSerialFiller.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\include\EmbeddedSerialFiller\Logger.h</name>
+                <name>$PROJ_DIR$\include\EmbeddedSerialFiller\EmbeddedSerialFiller_NoRTOS.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\include\EmbeddedSerialFiller\EmbeddedSerialFiller_RTOS.h</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\include\EmbeddedSerialFiller\Utilities.h</name>
@@ -2148,7 +2154,13 @@
             <name>$PROJ_DIR$\include\esf_embos_abstraction.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\include\esf_other_os_abstraction.h</name>
+            <name>$PROJ_DIR$\include\esf_freertos_abstraction.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\include\esf_full_std_support.h</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\include\esf_no_rtos_abstraction.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\include\etl_profile.h</name>

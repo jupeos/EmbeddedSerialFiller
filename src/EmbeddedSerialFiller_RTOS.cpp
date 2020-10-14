@@ -15,7 +15,7 @@ namespace esf
 ESF_MUTEX EmbeddedSerialFiller::classMutex_;
 
 EmbeddedSerialFiller::EmbeddedSerialFiller()
-    : nextPacketId_( 1 ), threadSafetyEnabled_( true ), nextFreeSubsriberId_( 0 )
+    : nextPacketId_( 1 ), threadSafetyEnabled_( true ), maxAckPacketIndex( 0 ), nextFreeSubsriberId_( 0 )
 {
     ESF_CONSTRUCTOR( classMutex_ );
 }

@@ -8,7 +8,6 @@
 #include "EmbeddedSerialFiller/EmbeddedSerialFiller.h"
 #include "EmbeddedSerialFiller/Utilities.h"
 
-
 namespace esf
 {
 EmbeddedSerialFiller::EmbeddedSerialFiller() : nextPacketId_( 1 ), nextFreeSubsriberId_( 0 )
@@ -22,7 +21,7 @@ uint8_t EmbeddedSerialFiller::Publish( const Topic& topic, const ByteArray& data
 
 /**
  * This method implements a very small state machine (using a local continuation) to correctly handle multiple calls
- * in order to provide a non-blocking *Publish* while waiting for an acknowledgment.
+ * in order to provide a non-blocking *Publish* while waiting for an acknowledgement.
  */
 #define ENTRY_POINT ( 0 )
 #define CONTINUATION_POINT ( 1 )
@@ -139,7 +138,7 @@ StatusCode EmbeddedSerialFiller::GiveRxData( ByteArray& rxData )
     StatusCode result = StatusCode::SUCCESS;
 
     ByteArray packet;
-    result = Utilities::MoveRxDataInBuffer( rxData, rxBuffer_, packet );
+    result = Utilities::MoveRxDataInBuffer( rxData, rxBuffer_, packet );  // ~25us
     if( result == StatusCode::SUCCESS )
     {
         while( !packet.empty() )
@@ -152,7 +151,7 @@ StatusCode EmbeddedSerialFiller::GiveRxData( ByteArray& rxData )
 
             // Remove COBS encoding
             ByteArray decodedData;
-            result = CobsTranscoder::Decode( packet, decodedData );
+            result = CobsTranscoder::Decode( packet, decodedData );  // ~4us
             if( result == StatusCode::SUCCESS )
             {
                 // Verify CRC
@@ -269,11 +268,33 @@ uint8_t EmbeddedSerialFiller::PublishInternal( const PacketType& packetType, uin
             {
                 // 3rd byte (pre-COBS encoded) is num. of bytes for topic
                 packet.emplace_back( static_cast<uint8_t>( topic->size() ) );
+#if defined( ESF_OPTIMISE )
+                // ~5us
+                Topic::const_iterator iter = topic->begin();
+                Topic::const_iterator endIter = topic->end();
+                for( ; iter < endIter; ++iter )
+                {
+                    packet.emplace_back( *iter );
+                }
+#else
+                // ~14us
                 packet.insert( packet.end(), topic->begin(), topic->end() );
+#endif
             }
             if( data != nullptr )
             {
+#if defined( ESF_OPTIMISE )
+                // ~15us
                 packet.insert( packet.end(), data->begin(), data->end() );
+#else
+                // ~30us
+                ByteArray::const_iterator iter = data->begin();
+                ByteArray::const_iterator endIter = data->end();
+                for( ; iter < endIter; ++iter )
+                {
+                    packet.emplace_back( *iter );
+                }
+#endif
             }
         }
         break;
@@ -285,16 +306,21 @@ uint8_t EmbeddedSerialFiller::PublishInternal( const PacketType& packetType, uin
     }
 
     // Add CRC
-    Utilities::AddCrc( packet );
+    {
+        // ~18us
+        Utilities::AddCrc( packet );
+    }
 
     // Encode data using COBS
     ByteArray encodedData;
-// Encode data using COBS
+    {
+        // ~18us
         CobsTranscoder::Encode( packet, encodedData );
-
+    }
     // Emit TX send event
     if( txDataReady_ )
     {
+        // ~11us
         txDataReady_( encodedData );
     }
     else

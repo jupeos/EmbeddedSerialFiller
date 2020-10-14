@@ -128,9 +128,14 @@ void CobsTranscoder::Encode( const uint8_t* rawData, size_t length, uint8_t* enc
 StatusCode CobsTranscoder::Decode( const ByteArray& encodedData, ByteArray& decodedData )
 {
 #if defined( ESF_OPTIMISE )
-    // Pre-size the decoded data container.
-    decodedData.resize( encodedData.size() - 2 - ( encodedData.size() - 2 - ( encodedData.size() - 2 ) / 254 ) / 254 );
-    return Decode( encodedData.data(), encodedData.size(), decodedData.data() );
+    StatusCode result = StatusCode::ERROR_NOT_ENOUGH_BYTES;
+    if( encodedData.size() >= ESF_MIN_BYTES )
+    {
+        // Pre-size the decoded data container.
+        decodedData.resize( encodedData.size() - 2 - ( encodedData.size() - 2 - ( encodedData.size() - 2 ) / 254 ) / 254 );
+        result = Decode( encodedData.data(), encodedData.size(), decodedData.data() );
+    }
+    return result;
 #else
     decodedData.clear();
 
