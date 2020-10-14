@@ -108,4 +108,43 @@ TEST_F( PacketizeTest, SegmentedDataTest )
     EXPECT_EQ( ByteQueue( {} ), existingRxData );
 }
 
+TEST_F( PacketizeTest, SegmentedDataTest2 )
+{
+    auto newRxData1 = ByteQueue( {0x0C, 0x50, 0xD1 /*, 0x05 is missing*/} );
+    auto newRxData2 = ByteQueue( {0x43, 0x4F, 0x4D, 0x4E, 0x44, 0x03, 0x6C, 0x78, 0x00} );
+    auto existingRxData = ByteQueue();
+    std::vector<ByteArray> packets;
+    ByteArray packet;
+
+    while( Utilities::MoveRxDataInBuffer( newRxData, existingRxData, packet ), !packet.empty() )
+    {
+        packets.push_back( packet );
+    }
+
+    EXPECT_EQ( 0, packets.size() );
+    EXPECT_EQ( ByteQueue( {0x01, 0x02, 0x03} ), existingRxData );
+
+    // Now add a EOF byte + start of next packet (which should complete the
+    // packet partially received above)
+    newRxData = ByteQueue( {0x00, 0xAA, 0xAB} );
+    while( Utilities::MoveRxDataInBuffer( newRxData, existingRxData, packet ), !packet.empty() )
+    {
+        packets.push_back( packet );
+    }
+
+    EXPECT_EQ( 1, packets.size() );
+    EXPECT_EQ( ByteArray( {0x01, 0x02, 0x03, 0x00} ), packets[ 0 ] );
+    EXPECT_EQ( ByteQueue( {0xAA, 0xAB} ), existingRxData );
+
+    newRxData = ByteQueue( {0x00} );
+    while( Utilities::MoveRxDataInBuffer( newRxData, existingRxData, packet ), !packet.empty() )
+    {
+        packets.push_back( packet );
+    }
+
+    EXPECT_EQ( 2, packets.size() );
+    EXPECT_EQ( ByteArray( {0xAA, 0xAB, 0x00} ), packets[ 1 ] );
+    EXPECT_EQ( ByteQueue( {} ), existingRxData );
+}
+
 }  // namespace
