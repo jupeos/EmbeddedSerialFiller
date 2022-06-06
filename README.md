@@ -25,7 +25,7 @@ When used with a RTOS a minimal implementation is needed to fulfil the abstracti
 Building/Installing
 ===================
 
-Clone this repository (`git clone https://github.com/jupeos/EmbeddedSerialFiller.git`). Then `cd` into the repo's root directory and do one of the following:
+Clone this repository (`git clone https://github.com/jupeos/EmbeddedSerialFiller.git` as well as the etl submodule `git submodule update --init`). Then `cd` into the repo's root directory and do one of the following:
 
 Use The Script
 --------------
