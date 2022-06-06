@@ -1,0 +1,12 @@
+# Standard build directory if doing manual build
+build/
+
+# More build dirs
+Debug
+Release
+
+# IAR Workbench related
+settings
+*.dep
+*.ewd
+*.ewt
