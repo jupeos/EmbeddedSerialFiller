@@ -2,6 +2,8 @@
 
 # [EmbeddedSerialFiller](https://github.com/jupeos/EmbeddedSerialFiller#embeddedserialfiller)
 
+A serial publish/subscribe based communication protocol for Embedded MCU's with support for bare metal or RTOS. May be used for sending messages across serial links (although it is agnostic to the transport layer) with the ability to transfer any type of data on a "topic".
+
 Combining the [ETL](https://github.com/ETLCPP/etl) with [SerialFiller](https://github.com/gbmhunter/SerialFiller) intended for small footprint embedded systems.
 
 The main differences to SerialFiller are:
